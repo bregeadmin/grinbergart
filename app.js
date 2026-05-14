@@ -16,7 +16,7 @@ const translations = {
   "Projects": "Проекты",
   "Hire": "Связаться",
   "I turn complex markets into revenue systems.": "Я превращаю сложные рынки в работающие коммерческие системы.",
-  "Bring me in when the opportunity is valuable but still unshaped: a property business, an investor story, a sales funnel, a partnership format, a product mechanic, or an internal tool that has to make the company faster.": "Меня стоит подключать, когда возможность ценная, но ещё не собрана в ясную систему: бизнес в недвижимости, история для инвестора, воронка продаж, партнёрская модель, продуктовая механика или внутренний инструмент, который должен ускорить компанию.",
+  "Bring me in when the opportunity is valuable but still unshaped: a property business, an investment case with clear economics, a sales funnel, a partnership format, a product mechanic, or an internal tool that has to make the company faster.": "Меня стоит подключать, когда возможность ценная, но ещё не собрана в ясную систему: бизнес в недвижимости, инвестиционная логика, воронка продаж, партнёрская модель, продуктовая механика или внутренний инструмент, который должен ускорить компанию.",
   "Invite me to talk": "Пригласить поговорить",
   "See the work": "Смотреть кейсы",
   "property transaction volume closed in one year": "объём сделок с недвижимостью за один год",
