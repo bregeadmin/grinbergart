@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
+<title>Адаптация сотрудника — Арикова Ксения · Азбука Вкуса</title>
+<style>
+  :root{
+    --green-dark:#005032;
+    --green-dark-2:#00422a;
+    --green:#77C541;
+    --green-600:#5fa830;
+    --ink:#1b2a22;
+    --muted:#5d6b63;
+    --line:#e3eae5;
+    --bg-soft:#f4f8f4;
+    --radius:16px;
+    --shadow:0 10px 30px rgba(0,80,50,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Calibri","Segoe UI",-apple-system,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    background:#fff;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{line-height:1.12;font-weight:700;letter-spacing:-.01em}
+  .accent{color:var(--green)}
+  .accent-dark{color:var(--green-600)}
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:saturate(160%) blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1180px;margin:0 auto;padding:12px 28px;
+    display:flex;align-items:center;gap:20px;
+  }
+  .nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--green-dark);white-space:nowrap}
+  .nav-brand img{height:30px;width:auto}
+  .nav-brand span{font-size:15px}
+  .nav-links{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .nav-links a{
+    text-decoration:none;color:var(--muted);font-size:14px;font-weight:600;
+    padding:7px 12px;border-radius:999px;transition:.18s;white-space:nowrap;
+  }
+  .nav-links a:hover{background:var(--bg-soft);color:var(--green-dark)}
+
+  /* ---------- LAYOUT ---------- */
+  section{padding:84px 28px}
+  .wrap{max-width:1180px;margin:0 auto}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--green-600);margin-bottom:16px;
+  }
+  .eyebrow::before{content:"";width:22px;height:2px;background:var(--green);border-radius:2px}
+  .section-title{font-size:clamp(28px,4vw,40px);margin-bottom:14px}
+  .lead{font-size:18px;color:var(--muted);max-width:760px}
+
+  /* ---------- HERO (dark green) ---------- */
+  .hero{
+    position:relative;overflow:hidden;
+    background:var(--green-dark);
+    color:#fff;
+    min-height:88vh;display:flex;align-items:center;
+    padding:60px 28px;
+  }
+  .hero .curves{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5}
+  .hero-inner{position:relative;max-width:1180px;margin:0 auto;width:100%}
+  .hero img.logo{height:64px;margin-bottom:40px}
+  .hero h1{font-size:clamp(40px,7vw,82px);font-weight:800;max-width:14ch}
+  .hero .who{
+    margin-top:34px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .hero .who .name{font-size:22px;font-weight:700}
+  .hero .who .tag{
+    font-size:14px;font-weight:600;color:#bfe6cf;
+    border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:6px 14px;
+  }
+  .scroll-cue{margin-top:54px;font-size:14px;color:#9fd3b3;display:flex;align-items:center;gap:10px}
+  .scroll-cue .dot{width:9px;height:9px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* ---------- DARK DIVIDER SECTIONS ---------- */
+  .divider{
+    position:relative;overflow:hidden;background:var(--green-dark);color:#fff;
+    padding:96px 28px;
+  }
+  .divider .curves{position:absolute;inset:0;width:100%;height:100%;opacity:.5;pointer-events:none}
+  .divider-inner{position:relative;max-width:1180px;margin:0 auto}
+  .divider .kicker{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:14px}
+  .divider h2{font-size:clamp(34px,6vw,64px);font-weight:800}
+
+  /* ---------- CARDS / GRIDS ---------- */
+  .grid{display:grid;gap:22px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px;box-shadow:var(--shadow);
+  }
+  .card.soft{background:var(--bg-soft);box-shadow:none}
+  .card h3{font-size:20px;margin-bottom:12px;color:var(--green-dark)}
+  .card .ic{
+    width:46px;height:46px;border-radius:12px;background:var(--green);
+    display:flex;align-items:center;justify-content:center;margin-bottom:16px;
+    color:#fff;font-size:22px;font-weight:800;
+  }
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:12px}
+  ul.clean li{position:relative;padding-left:30px;color:#33433a}
+  ul.clean li::before{
+    content:"";position:absolute;left:0;top:9px;width:8px;height:8px;border-radius:50%;
+    background:var(--green);
+  }
+  ul.check li::before{
+    content:"✓";background:none;left:0;top:0;width:auto;height:auto;
+    color:var(--green-600);font-weight:800;font-size:16px;
+  }
+  ul.check li{padding-left:28px}
+
+  /* number tag */
+  .numlist{counter-reset:n;list-style:none;display:flex;flex-direction:column;gap:16px}
+  .numlist li{counter-increment:n;display:flex;gap:16px;align-items:flex-start}
+  .numlist li::before{
+    content:counter(n);flex:0 0 auto;
+    width:34px;height:34px;border-radius:10px;background:var(--green-dark);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;
+  }
+  .numlist li b{color:var(--green-dark)}
+
+  /* responsible chips */
+  .who-chip{
+    display:inline-block;font-size:12.5px;font-weight:600;color:var(--green-dark);
+    background:#e9f4ec;border-radius:999px;padding:3px 11px;margin-top:8px;margin-right:6px;
+  }
+  .who-chip.self{background:#f0f0f0;color:#666}
+
+  /* stat callout */
+  .stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:4px}
+  .stat{
+    background:var(--green-dark);color:#fff;border-radius:var(--radius);padding:30px;
+    position:relative;overflow:hidden;
+  }
+  .stat .num{font-size:54px;font-weight:800;line-height:1}
+  .stat .lbl{margin-top:10px;font-size:15px;color:#cdeacd;max-width:34ch}
+  .stat.alt{background:var(--green);color:#06351f}
+  .stat.alt .lbl{color:#0d4a2c}
+
+  /* image frame */
+  .imgframe{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .imgframe img{display:block;width:100%;height:auto}
+
+  .meta{font-size:13px;color:var(--muted);margin-top:10px}
+  .badge-dl{
+    display:inline-block;font-size:12px;font-weight:700;color:#9a3b16;background:#fdeee5;
+    border-radius:6px;padding:2px 8px;
+  }
+
+  /* split */
+  .split{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+
+  /* thank you */
+  .thanks{text-align:center}
+  .thanks h2{font-size:clamp(38px,6vw,72px);font-weight:800}
+  .thanks img.mark{height:70px;margin-bottom:28px}
+
+  footer{background:var(--green-dark-2);color:#bfe6cf;text-align:center;padding:26px;font-size:13px}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:860px){
+    .g2,.g3,.split,.stat-row{grid-template-columns:1fr}
+    .nav-links{display:none}
+    section{padding:60px 22px}
+  }
+  .reveal{opacity:0;transform:translateY(22px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <img src="img/logo-mark.png" alt="Азбука Вкуса">
+      <span>Отчёт об адаптации</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#cel">Цель</a>
+      <a href="#plan">План</a>
+      <a href="#celi">Цели в работе</a>
+      <a href="#tmc">Блок ТМЦ</a>
+      <a href="#syrye">Блок сырья</a>
+      <a href="#kpi">KPI</a>
+      <a href="#final">Итог</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <svg class="curves" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
+    <path d="M-100 250 Q 600 -150 1600 480" stroke="#ffffff" stroke-width="2" opacity=".7"/>
+    <path d="M250 1050 Q 700 350 1700 650" stroke="#ffffff" stroke-width="2" opacity=".5"/>
+    <path d="M-150 700 Q 300 400 900 1000" stroke="#ffffff" stroke-width="1.5" opacity=".4"/>
+  </svg>
+  <div class="hero-inner">
+    <img class="logo" src="img/logo-white.png" alt="Азбука Вкуса">
+    <h1>Адаптация<br>сотрудника</h1>
+    <div class="who">
+      <span class="name">Арикова Ксения</span>
+      <span class="tag">Отчёт о погружении · 2-й месяц</span>
+    </div>
+    <div class="scroll-cue"><span class="dot"></span> Листайте вниз</div>
+  </div>
+</section>
+
+<!-- ЦЕЛЬ ВСТРЕЧИ -->
+<section id="cel">
+  <div class="wrap split">
+    <div>
+      <span class="eyebrow">Цель встречи</span>
+      <h2 class="section-title">Отчёт о погружении в работу</h2>
+      <p class="lead">Второй месяц адаптации: что сделано, какие получены результаты и куда движемся дальше.</p>
+    </div>
+    <div class="grid g2" style="gap:18px">
+      <div class="card soft"><div class="ic">2</div><h3>Месяц адаптации</h3><p style="color:var(--muted)">Подведение промежуточных итогов погружения.</p></div>
+      <div class="card soft"><div class="ic">★</div><h3>Цели и результаты</h3><p style="color:var(--muted)">Фокус на достижениях и точках роста.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ПЛАН АДАПТАЦИИ -->
+<section id="plan" style="background:var(--bg-soft)">
+  <div class="wrap">
+    <span class="eyebrow">План адаптации</span>
+    <h2 class="section-title">Закрепить, масштабировать, предложить стратегию</h2>
+    <p class="lead" style="margin-bottom:38px">Цель этапа — закрепить инициативы, масштабировать идеи и предложить стратегию развития на полгода.</p>
+    <ol class="numlist" style="max-width:920px">
+      <li><div><b>Подведение итогов первых блоков</b> — что удалось, что нет, что требует поддержки.<br>
+        <span class="who-chip">Арсентьев Пётр</span><span class="who-chip">Ольга Князева</span></div></li>
+      <li><div><b>Сбор обратной связи</b> у сотрудников и руководителей.<br>
+        <span class="who-chip self">Сотрудник самостоятельно</span></div></li>
+      <li><div><b>План снижения сырьевой закупочной цены</b> на производственной площадке СПб.<br>
+        <span class="who-chip self">Сотрудник самостоятельно</span></div></li>
+      <li><div><b>Участие в планировании</b> общекорпоративных проектов.<br>
+        <span class="who-chip self">Сотрудник самостоятельно</span></div></li>
+      <li><div><b>Презентация ключевых достижений</b> за 3 месяца.<br>
+        <span class="who-chip self">Сотрудник самостоятельно</span></div></li>
+      <li><div><b>Метрики эффективности (KPI)</b> и целевые ориентиры, формат отчётности по ним.<br>
+        <span class="who-chip">Арсентьев Пётр</span><span class="who-chip">Князева Ольга</span><span class="who-chip self">сотрудник</span></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ОСНОВНЫЕ ЦЕЛИ В РАБОТЕ -->
+<section id="celi">
+  <div class="wrap">
+    <span class="eyebrow">Основные цели в работе</span>
+    <h2 class="section-title">Два направления ответственности</h2>
+    <div class="grid g2" style="margin-top:34px">
+      <div class="card">
+        <h3>🌾 Закупка сырья</h3>
+        <ul class="clean">
+          <li>Оптимизация сырьевой себестоимости</li>
+          <li>Подготовка к РПН</li>
+          <li>Список «ингредиентов» для глубокой проработки</li>
+          <li>Проработка поставщиков — выход на работу напрямую с производителями</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>📦 Закупка ТМЦ</h3>
+        <ul class="clean">
+          <li>Поддержание стока, избежание обнуления</li>
+          <li>Вникнуть в специфику</li>
+          <li>Оптимизация работы с чехлами и гофротарой</li>
+          <li>Выделение «проблемных мест»</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER: БЛОК ТМЦ -->
+<section class="divider" id="tmc">
+  <svg class="curves" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" fill="none">
+    <path d="M-100 150 Q 600 -120 1600 380" stroke="#fff" stroke-width="2" opacity=".6"/>
+    <path d="M200 720 Q 700 250 1700 480" stroke="#fff" stroke-width="1.5" opacity=".4"/>
+  </svg>
+  <div class="divider-inner">
+    <div class="kicker">Блок 01</div>
+    <h2>Блок ТМЦ</h2>
+  </div>
+</section>
+
+<!-- ДОРОЖНАЯ КАРТА ТМЦ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Дорожная карта ТМЦ</span>
+    <h2 class="section-title">Задачи в работе и их статусы</h2>
+    <p class="lead" style="margin-bottom:30px">Сквозной трекинг задач по блоку ТМЦ с ответственными и сроками.</p>
+    <div class="imgframe"><img src="img/roadmap.png" alt="Дорожная карта ТМЦ — список задач"></div>
+  </div>
+</section>
+
+<!-- РЕЗУЛЬТАТЫ -->
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <span class="eyebrow">Результаты — что удалось</span>
+    <h2 class="section-title">Налаженные процессы</h2>
+    <div class="grid g2" style="margin-top:34px">
+      <div class="card">
+        <ul class="clean check">
+          <li><b>Регулярные синхро-встречи</b> с коллегами из МСК (каждый вторник 11:00) по планированию заказов и сложным ситуациям.</li>
+          <li><b>Входной контроль ТМЦ</b> — отдел Ольги Перфильевой осуществляет контроль; создана подзадача и группа в Яндекс Мессенджере.</li>
+          <li><b>Запросы по ценам от технологов</b> (~3 в неделю) обрабатываются в срок.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul class="clean check">
+          <li><b>Отчёт о невыдаче ТМЦ</b> обрабатывается каждое утро.</li>
+          <li><b>Создание нового товара</b> через AB 365 / NCI.</li>
+          <li><b>Неиспользуемые чехлы</b> — собрание 1 раз в месяц с КУ для решения о списании или возобновлении производства блюда.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ВОПРОСЫ В РАБОТЕ + СТАТ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Вопросы, которые в работе</span>
+    <h2 class="section-title">В процессе решения</h2>
+    <div class="split" style="margin-top:34px">
+      <div class="card">
+        <ul class="clean">
+          <li><b>Сопроводительные документы</b> — передача в Отдел производственного контроля СПб (Пеньковский Максим). Проверка до конца месяца <span class="badge-dl">DL 31.05.2026</span></li>
+          <li><b>Гофротара:</b> завершён тендер; проверка поставщиков выполнена, выявлен локальный поставщик — Комус, в процессе перевода <span class="badge-dl">DL 31.05.2026</span></li>
+          <li><b>Встреча с производством и складом</b> проведена — выделены категории, где невозможен открытый транспортировочный ящик (B2B, паштеты, заморозка, морковь, часть кондитерки).</li>
+          <li>Вся гофротара переведена на одного поставщика по тендеру — снижение себестоимости.</li>
+          <li>Всё хранение переведено на ЦС.</li>
+          <li>Комментарии после РПН — ожидаем.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="stat-row" style="grid-template-columns:1fr">
+          <div class="stat alt">
+            <div class="num">−15,39%</div>
+            <div class="lbl">экономия по коробам в год за счёт объединения и перевода позиций единому производителю</div>
+          </div>
+          <div class="stat">
+            <div class="num">1</div>
+            <div class="lbl">поставщик гофротары вместо нескольких — единый тендер</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- БОЛЬ -->
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <span class="eyebrow">«Боль»</span>
+    <h2 class="section-title">Точки, требующие внимания</h2>
+    <div class="grid g2" style="margin-top:34px">
+      <div class="card"><h3>Упаковка кратно кванту</h3><p style="color:var(--muted)">Переход на выдачу упаковки кратно кванту — пока нет оптимального решения.</p></div>
+      <div class="card"><h3>Сроки инвентаризации</h3><p style="color:var(--muted)">Нет понимания сроков; для корректной работы необходима инвентаризация 1 раз в месяц.</p></div>
+      <div class="card"><h3>Вопрос с чехлами</h3><p style="color:var(--muted)">Требует более тщательной проработки — и в понимании, и в экспертности.</p></div>
+      <div class="card"><h3>Передача в дивизион СПб</h3><p style="color:var(--muted)">Вопросы по чехлам СПб планируем передать сотрудникам дивизиона СПб.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ПРИОРИТЕТНЫЕ НАПРАВЛЕНИЯ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Приоритетные направления</span>
+    <h2 class="section-title">Куда направлены усилия</h2>
+    <div class="grid g3" style="margin-top:34px">
+      <div class="card"><div class="ic">₽</div><h3>Снижение себестоимости</h3></div>
+      <div class="card"><div class="ic">↻</div><h3>Повышение оборачиваемости</h3></div>
+      <div class="card"><div class="ic">✦</div><h3>Повышение экспертности</h3></div>
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER: БЛОК СЫРЬЯ -->
+<section class="divider" id="syrye">
+  <svg class="curves" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" fill="none">
+    <path d="M-100 420 Q 600 720 1600 220" stroke="#fff" stroke-width="2" opacity=".6"/>
+    <path d="M150 -60 Q 700 350 1700 120" stroke="#fff" stroke-width="1.5" opacity=".4"/>
+  </svg>
+  <div class="divider-inner">
+    <div class="kicker">Блок 02</div>
+    <h2>Блок сырья</h2>
+  </div>
+</section>
+
+<!-- РЕЗУЛЬТАТ ПО СЫРЬЮ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Результат по сырью</span>
+    <h2 class="section-title">Проработка ассортимента и поставщиков</h2>
+    <div class="grid g2" style="margin-top:34px">
+      <div class="card">
+        <ul class="clean">
+          <li><b>Выделена группа товаров</b> для проработки.</li>
+          <li><b>Мясо напрямую от производителей</b> (индейка, курица, говядина) — сейчас работа не ведётся; нужен поиск поставщиков.</li>
+          <li><b>Поиск аналогов</b> творога, молока, солений (огурцы, квашеная капуста).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul class="clean">
+          <li><b>Орехи и сухофрукты</b> — добавить в торги 2–3 поставщиков для конкуренции.</li>
+          <li><b>Весовая зелень</b> — снижение цены за счёт роста конкуренции.</li>
+          <li><b>Отказ</b> от работы с просроченным сырьём Японии.</li>
+          <li><b>Договорная работа</b> с новыми поставщиками переведена на ведущего специалиста.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ОТЧЕТНОСТЬ -->
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <span class="eyebrow">Отчётность</span>
+    <h2 class="section-title">Ритм отчётности</h2>
+    <div class="grid g2" style="margin-top:34px">
+      <div class="card">
+        <h3>Еженедельная</h3>
+        <ul class="clean">
+          <li>«Стопы» по ГП</li>
+          <li>Анализ цен прошедшего периода</li>
+          <li>Анализ цен для ПНМ и кондитерки в режиме «будущего»</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Ежемесячная</h3>
+        <ul class="clean">
+          <li>Списания по ФК</li>
+          <li>Зависшее сырьё</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KPI -->
+<section id="kpi">
+  <div class="wrap">
+    <span class="eyebrow">Из чего складывается KPI</span>
+    <h2 class="section-title">Метрики эффективности</h2>
+    <div class="grid g3" style="margin-top:34px">
+      <div class="stat"><div class="num">шт</div><div class="lbl">Товарооборот в штуках</div></div>
+      <div class="stat"><div class="num">₽</div><div class="lbl">Товарооборот в рублях</div></div>
+      <div class="stat"><div class="num">ФК·ГП</div><div class="lbl">Списания сырья ФК и ГП в магазинах</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- УЧАСТИЕ / ИГРА -->
+<section class="divider">
+  <svg class="curves" viewBox="0 0 1440 700" preserveAspectRatio="xMidYMid slice" fill="none">
+    <path d="M-100 200 Q 600 -120 1600 420" stroke="#fff" stroke-width="2" opacity=".5"/>
+    <path d="M200 800 Q 700 320 1700 560" stroke="#fff" stroke-width="1.5" opacity=".35"/>
+  </svg>
+  <div class="divider-inner split" style="align-items:center">
+    <div>
+      <div class="kicker">Команда</div>
+      <h2 style="font-size:clamp(30px,5vw,52px)">Участие в игре<br>«договориться обо всём»</h2>
+    </div>
+    <div class="imgframe" style="border-color:rgba(255,255,255,.2)"><img src="img/team.png" alt="Команда — участие в игре"></div>
+  </div>
+</section>
+
+<!-- СПАСИБО -->
+<section class="divider thanks" id="final">
+  <svg class="curves" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" fill="none">
+    <path d="M-100 300 Q 720 -100 1600 300" stroke="#fff" stroke-width="2" opacity=".5"/>
+    <path d="M-100 360 Q 720 720 1600 360" stroke="#fff" stroke-width="1.5" opacity=".35"/>
+  </svg>
+  <div class="divider-inner">
+    <img class="mark" src="img/logo-white.png" alt="Азбука Вкуса">
+    <h2>Спасибо за внимание</h2>
+  </div>
+</section>
+
+<footer>
+  Азбука Вкуса · Отчёт об адаптации сотрудника — Арикова Ксения
+</footer>
+
+<script>
+  // scroll reveal
+  document.querySelectorAll('section .wrap, .divider-inner, .hero-inner').forEach(el=>el.classList.add('reveal'));
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}});
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
