@@ -158,6 +158,36 @@
   .imgframe{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
   .imgframe img{display:block;width:100%;height:auto}
 
+  /* roadmap table */
+  .rmap-legend{display:flex;flex-wrap:wrap;gap:8px 22px;margin-bottom:16px;font-size:14px;font-weight:600;color:var(--muted)}
+  .rmap-legend .lg{display:inline-flex;align-items:center;gap:7px}
+  .rmap-legend .heart{font-size:16px}
+  .rmap-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .rmap-filters button{
+    font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--muted);
+    padding:7px 15px;border-radius:999px;transition:.15s;
+  }
+  .rmap-filters button:hover{border-color:var(--green)}
+  .rmap-filters button.active{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
+  .rmap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:#fff}
+  .rmap-row{display:grid;grid-template-columns:24px 22px 1fr;gap:12px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);transition:opacity .2s}
+  .rmap-row:first-child{border-top:none}
+  .rmap-row.dim{opacity:.22}
+  .rmap-row .chk{width:17px;height:17px;border:1.5px solid #c4cfc8;border-radius:5px;flex:0 0 auto}
+  .rmap-row .chk.on{background:var(--green-600);border-color:var(--green-600);position:relative}
+  .rmap-row .chk.on::after{content:"✓";color:#fff;font-size:12px;font-weight:800;position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .rmap-row .heart{font-size:17px;line-height:1;text-align:center}
+  .rmap-row .heart.done,.rmap-row .heart.work{color:#4a9e2e}
+  .rmap-row .heart.pain{color:#d63b3b}
+  .rmap-row .cell{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .rmap-row .task{font-size:14.5px;color:#33433a;flex:1 1 60%}
+  .rmap-row .task .n{color:#9aa8a0;font-weight:700;margin-right:7px}
+  .rmap-row .due{
+    font-size:12.5px;font-weight:600;color:var(--green-dark);background:#eef5f0;
+    border-radius:999px;padding:3px 11px;white-space:nowrap;
+  }
+
   .meta{font-size:13px;color:var(--muted);margin-top:10px}
   .badge-dl{
     display:inline-block;font-size:12px;font-weight:700;color:#9a3b16;background:#fdeee5;
@@ -305,9 +335,41 @@
 <section>
   <div class="wrap">
     <span class="eyebrow">Дорожная карта ТМЦ</span>
-    <h2 class="section-title">Задачи в работе и их статусы</h2>
-    <p class="lead" style="margin-bottom:30px">Сквозной трекинг задач по блоку ТМЦ с ответственными и сроками.</p>
-    <div class="imgframe"><img src="/azbuka/img/roadmap.png" alt="Дорожная карта ТМЦ — список задач"></div>
+    <h2 class="section-title">17 задач блока ТМЦ и их статусы</h2>
+    <p class="lead" style="margin-bottom:26px">Зелёным сердечком отмечены результаты и задачи в работе, красным — «боль». Нажмите на фильтр, чтобы выделить нужную группу.</p>
+
+    <div class="rmap-legend">
+      <span class="lg"><span class="heart done">♥</span> Результаты и задачи в работе</span>
+      <span class="lg"><span class="heart pain">♥</span> «Боль»</span>
+      <span class="lg"><span class="chk on" style="display:inline-block;width:16px;height:16px;border-radius:5px"></span> Выполнено</span>
+    </div>
+
+    <div class="rmap-filters">
+      <button class="active" data-filter="all">Все задачи</button>
+      <button data-filter="done">Готово</button>
+      <button data-filter="work">В работе</button>
+      <button data-filter="pain">Боль</button>
+    </div>
+
+    <div class="rmap">
+      <div class="rmap-row" data-cat="none"><span class="chk"></span><span class="heart"></span><div class="cell"><span class="task"><span class="n">1</span>Подготовить инструкции по процессам</span></div></div>
+      <div class="rmap-row" data-cat="done"><span class="chk"></span><span class="heart done">♥</span><div class="cell"><span class="task"><span class="n">2</span>Объёмы подаются ежемесячно совместно с коллегами по обеспечению МСК</span></div></div>
+      <div class="rmap-row" data-cat="done"><span class="chk"></span><span class="heart done">♥</span><div class="cell"><span class="task"><span class="n">3</span>Прогрузка цен через прайс-лист (УЗОТ)</span><span class="due">11 мая</span></div></div>
+      <div class="rmap-row" data-cat="pain"><span class="chk"></span><span class="heart pain">♥</span><div class="cell"><span class="task"><span class="n">4</span>Переход на выдачу упаковки кратно кванту короба</span><span class="due">11 мая</span></div></div>
+      <div class="rmap-row" data-cat="done"><span class="chk on"></span><span class="heart done">♥</span><div class="cell"><span class="task"><span class="n">5</span>Предоставление фото чехлов на производство силами склада</span></div></div>
+      <div class="rmap-row" data-cat="none"><span class="chk"></span><span class="heart"></span><div class="cell"><span class="task"><span class="n">6</span>Переход по позиции «плёнка» с ед. измерения кг на метр</span></div></div>
+      <div class="rmap-row" data-cat="done"><span class="chk"></span><span class="heart done">♥</span><div class="cell"><span class="task"><span class="n">7</span>Создание новых карточек (СЛТУФК) через 1С МДМ</span></div></div>
+      <div class="rmap-row" data-cat="work"><span class="chk"></span><span class="heart work">♥</span><div class="cell"><span class="task"><span class="n">8</span>Передача сопроводительных документов (деклараций) в отдел сертификации</span></div></div>
+      <div class="rmap-row" data-cat="done"><span class="chk"></span><span class="heart done">♥</span><div class="cell"><span class="task"><span class="n">9</span>Запросы по цене от технологов — почему они возникают</span></div></div>
+      <div class="rmap-row" data-cat="pain"><span class="chk"></span><span class="heart pain">♥</span><div class="cell"><span class="task"><span class="n">10</span>Проведение инвентаризации по категории ТМЦ</span><span class="due">8 мая</span></div></div>
+      <div class="rmap-row" data-cat="done"><span class="chk"></span><span class="heart done">♥</span><div class="cell"><span class="task"><span class="n">11</span>Отчёт о невыдаче, разбор причин</span></div></div>
+      <div class="rmap-row" data-cat="done"><span class="chk"></span><span class="heart done">♥</span><div class="cell"><span class="task"><span class="n">12</span>Определить сумму остатка неиспользуемой упаковки, причины и решение по использованию / утилизации</span><span class="due">8 мая</span></div></div>
+      <div class="rmap-row" data-cat="work"><span class="chk"></span><span class="heart work">♥</span><div class="cell"><span class="task"><span class="n">13</span>Проверка прогрузки цен у текущих позиций</span><span class="due">11 мая</span></div></div>
+      <div class="rmap-row" data-cat="work"><span class="chk"></span><span class="heart work">♥</span><div class="cell"><span class="task"><span class="n">14</span>Проверка подключения всех поставщиков к EDI</span><span class="due">22 мая</span></div></div>
+      <div class="rmap-row" data-cat="work"><span class="chk"></span><span class="heart work">♥</span><div class="cell"><span class="task"><span class="n">15</span>Встреча с производством и складом по контролю остатков гофры (не подтягивается в расход)</span><span class="due">15 мая</span></div></div>
+      <div class="rmap-row" data-cat="work"><span class="chk"></span><span class="heart work">♥</span><div class="cell"><span class="task"><span class="n">16</span>Комментарии после проведения РПН</span><span class="due">15 мая</span></div></div>
+      <div class="rmap-row" data-cat="pain"><span class="chk"></span><span class="heart pain">♥</span><div class="cell"><span class="task"><span class="n">17</span>Определение оптимальной оборачиваемости и суммы несгораемого остатка по печатной продукции (чехлы)</span><span class="due">18 мая</span></div></div>
+    </div>
   </div>
 </section>
 
@@ -507,6 +569,16 @@
     es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}});
   },{threshold:.12});
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // roadmap filters
+  const fbtns=document.querySelectorAll('.rmap-filters button');
+  const rrows=document.querySelectorAll('.rmap-row');
+  fbtns.forEach(b=>b.addEventListener('click',()=>{
+    fbtns.forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const f=b.dataset.filter;
+    rrows.forEach(r=>r.classList.toggle('dim', f!=='all' && r.dataset.cat!==f));
+  }));
 </script>
 </body>
 </html>
