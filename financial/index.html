@@ -170,6 +170,24 @@
     padding:5px 10px;border-radius:8px;cursor:pointer;font-weight:600;margin-left:4px;}
   table.hist .del-row:hover{background:#fdecea;border-color:#e0b4ae;color:#c0392b;}
   .history .empty{color:var(--muted);text-align:center;padding:40px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .card .lab{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .card .val{font-size:17px;font-weight:700;line-height:1.4;}
+  .card .val .two{display:block;font-size:15px;color:var(--muted);font-weight:600;}
+  .card.out .val{color:#b26a00;} .card.paid .val{color:#11a36b;}
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;}
+  .filters select,.filters input{width:auto;font-size:13px;padding:7px 10px;}
+  .filters input{min-width:160px;}
+  .filters .exp{margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--accent);font:inherit;
+    font-size:13px;font-weight:600;padding:7px 14px;border-radius:9px;cursor:pointer;}
+  .filters .exp:hover{background:var(--accent-soft);border-color:var(--accent);}
+  table.hist .pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid transparent;}
+  table.hist .pill.unpaid{background:#fff3e0;color:#b26a00;}
+  table.hist .pill.paid{background:#e7f6ee;color:#11a36b;}
+  table.hist .pill.overdue{background:#fdecea;color:#c0392b;}
+  table.hist .pill:hover{filter:brightness(0.96);}
+  table.hist td .paidat{display:block;font-size:10px;color:var(--muted);margin-top:3px;}
 
   /* ---------- Print ---------- */
   @page{size:A4;margin:0;}
@@ -204,7 +222,7 @@
     <div class="brand"><span class="dot"></span> Artem Grinberg financial</div>
     <div class="tabs">
       <button class="tab active" id="tabCreate">Create</button>
-      <button class="tab" id="tabHistory">History</button>
+      <button class="tab" id="tabHistory">Invoices</button>
     </div>
     <div class="spacer"></div>
     <span class="badge hidden" id="guestBadge">Guest mode</span>
@@ -356,10 +374,23 @@
     </main>
   </div>
 
-  <!-- HISTORY -->
+  <!-- LEDGER / ACCOUNTING -->
   <div id="historyView" class="history hidden">
-    <h2>Invoice history</h2>
-    <div class="sub" id="histSub">All invoices, newest first.</div>
+    <h2>Invoices &amp; accounting</h2>
+    <div class="sub" id="histSub">Track what's invoiced, paid and outstanding.</div>
+    <div id="ledgerCards" class="cards"></div>
+    <div class="filters">
+      <select id="fMonth"></select>
+      <select id="fStatus">
+        <option value="">All statuses</option>
+        <option value="unpaid">Unpaid</option>
+        <option value="paid">Paid</option>
+        <option value="overdue">Overdue</option>
+      </select>
+      <select id="fWho"></select>
+      <input id="fClient" type="text" placeholder="Search client…" />
+      <button class="exp" id="exportCsv">⬇︎ Export CSV</button>
+    </div>
     <div id="histBody"></div>
   </div>
 </div>
@@ -606,27 +637,112 @@ async function sharePdf(){
   }finally{ $("sharePdfBtn").disabled=false; }
 }
 
-/* ====================== HISTORY ====================== */
+/* ====================== LEDGER / ACCOUNTING ====================== */
+let LEDGER=[];
+
+function statusOf(r){
+  if(r.status==="paid") return "paid";
+  if(r.due_date && r.due_date < todayISO()) return "overdue";
+  return "unpaid";
+}
+function whoLabel(r){ return (r.created_by==="admin")?"admin":(r.created_by==="guest"?"guest":(r.created_by||"—")); }
+function monthKey(d){ return (d||"").slice(0,7); } // YYYY-MM
+function monthLabel(k){
+  if(!k) return "";
+  const d=new Date(k+"-01T00:00:00");
+  return d.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+}
+function sumByCurrency(rows){
+  const m={};
+  rows.forEach(r=>{ const c=r.currency||"USD"; m[c]=(m[c]||0)+Number(r.total||0); });
+  return m;
+}
+function fmtMulti(m){
+  const keys=Object.keys(m).filter(c=>m[c]); if(!keys.length) return "—";
+  return keys.map((c,i)=>'<span class="'+(i?"two":"")+'">'+fmtMoney(m[c],c)+"</span>").join("");
+}
+
 async function loadHistory(){
   const body=$("histBody"); body.innerHTML='<div class="empty">Loading…</div>';
+  $("ledgerCards").innerHTML="";
   const { data, error } = await sb.from("invoices").select("*").order("created_at",{ascending:false});
-  if(error){ body.innerHTML='<div class="empty">Could not load history: '+escapeHtml(error.message)+"</div>"; return; }
-  if(!data.length){ body.innerHTML='<div class="empty">No invoices yet.</div>'; return; }
-  let h='<table class="hist"><thead><tr><th>№</th><th>Issue date</th><th>Client</th><th class="r">Total</th><th>By</th><th></th></tr></thead><tbody>';
-  data.forEach((r,i)=>{
-    const who=(r.created_by==="admin")?"admin":(r.created_by==="guest"?"guest":escapeHtml(r.created_by||"—"));
+  if(error){ body.innerHTML='<div class="empty">Could not load: '+escapeHtml(error.message)+"</div>"; return; }
+  LEDGER=data||[];
+  populateFilters();
+  renderLedger();
+}
+function populateFilters(){
+  const months=[...new Set(LEDGER.map(r=>monthKey(r.issue_date)).filter(Boolean))].sort().reverse();
+  const fMonth=$("fMonth"), cur=fMonth.value;
+  fMonth.innerHTML='<option value="">All months</option>'+months.map(m=>'<option value="'+m+'">'+monthLabel(m)+"</option>").join("");
+  if([...fMonth.options].some(o=>o.value===cur)) fMonth.value=cur;
+  const whos=[...new Set(LEDGER.map(r=>r.created_by).filter(Boolean))];
+  const fWho=$("fWho"), curW=fWho.value;
+  fWho.innerHTML='<option value="">Everyone</option>'+whos.map(w=>'<option value="'+escapeHtml(w)+'">'+escapeHtml(w)+"</option>").join("");
+  if([...fWho.options].some(o=>o.value===curW)) fWho.value=curW;
+}
+function filteredRows(){
+  const m=$("fMonth").value, st=$("fStatus").value, who=$("fWho").value, q=$("fClient").value.trim().toLowerCase();
+  return LEDGER.filter(r=>{
+    if(m && monthKey(r.issue_date)!==m) return false;
+    if(who && r.created_by!==who) return false;
+    if(st && statusOf(r)!==st) return false;
+    if(q && !((r.client_name||"").toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function renderLedger(){
+  const rows=filteredRows();
+  // summary cards
+  const paidRows=rows.filter(r=>statusOf(r)==="paid");
+  const openRows=rows.filter(r=>statusOf(r)!=="paid");
+  $("ledgerCards").innerHTML=
+    '<div class="card"><div class="lab">Invoiced</div><div class="val">'+fmtMulti(sumByCurrency(rows))+"</div></div>"+
+    '<div class="card out"><div class="lab">Outstanding</div><div class="val">'+fmtMulti(sumByCurrency(openRows))+"</div></div>"+
+    '<div class="card paid"><div class="lab">Paid</div><div class="val">'+fmtMulti(sumByCurrency(paidRows))+"</div></div>"+
+    '<div class="card"><div class="lab">Invoices</div><div class="val">'+rows.length+"</div></div>";
+  // table
+  const body=$("histBody");
+  if(!rows.length){ body.innerHTML='<div class="empty">'+(LEDGER.length?"No invoices match the filters.":"No invoices yet.")+"</div>"; return; }
+  let h='<table class="hist"><thead><tr><th>№</th><th>Issue date</th><th>Client</th><th class="r">Total</th><th>Status</th><th>By</th><th></th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    const s=statusOf(r);
+    const pillText=s==="paid"?"Paid":(s==="overdue"?"Overdue":"Unpaid");
+    const paidLine=(s==="paid"&&r.paid_at)?'<span class="paidat">'+fmtDate(r.paid_at)+"</span>":"";
+    const who=whoLabel(r), whoCls=(who==="admin"||who==="guest")?who:"";
     h+='<tr><td><b>'+escapeHtml(r.invoice_no||"—")+"</b></td>"+
        "<td>"+fmtDate(r.issue_date)+"</td>"+
        "<td>"+escapeHtml(r.client_name||"—")+"</td>"+
        '<td class="r">'+fmtMoney(Number(r.total||0),r.currency||"USD")+"</td>"+
-       '<td><span class="who '+(who==="admin"||who==="guest"?who:"")+'">'+who+"</span></td>"+
-       '<td class="r"><button class="open" data-i="'+i+'">Open</button> '+
+       '<td><span class="pill '+s+'" data-id="'+r.id+'" title="Click to toggle paid/unpaid">'+pillText+"</span>"+paidLine+"</td>"+
+       '<td><span class="who '+whoCls+'">'+escapeHtml(who)+"</span></td>"+
+       '<td class="r"><button class="open" data-id="'+r.id+'">Open</button> '+
        '<button class="del-row" data-id="'+r.id+'" title="Delete">✕</button></td></tr>';
   });
   h+="</tbody></table>";
   body.innerHTML=h;
-  body.querySelectorAll(".open").forEach(btn=>btn.addEventListener("click",()=>openInvoice(data[parseInt(btn.dataset.i,10)])));
+  body.querySelectorAll(".pill").forEach(el=>el.addEventListener("click",()=>toggleStatus(el.dataset.id)));
+  body.querySelectorAll(".open").forEach(btn=>btn.addEventListener("click",()=>openInvoice(LEDGER.find(x=>x.id===btn.dataset.id))));
   body.querySelectorAll(".del-row").forEach(btn=>btn.addEventListener("click",()=>deleteInvoice(btn.dataset.id)));
+}
+async function toggleStatus(id){
+  const r=LEDGER.find(x=>x.id===id); if(!r) return;
+  const makePaid=(r.status!=="paid");
+  const upd={ status: makePaid?"paid":"unpaid", paid_at: makePaid?todayISO():null };
+  const { error } = await sb.from("invoices").update(upd).eq("id",id);
+  if(error){ alert("Could not update status: "+error.message); return; }
+  r.status=upd.status; r.paid_at=upd.paid_at;
+  renderLedger();
+}
+function exportCsv(){
+  const rows=filteredRows();
+  if(!rows.length){ alert("Nothing to export with current filters."); return; }
+  const cols=["invoice_no","issue_date","due_date","client_name","client_country","currency","subtotal","vat_rate","vat_amount","total","status","paid_at","created_by"];
+  const esc=v=>{ v=(v==null?"":String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const lines=[cols.join(",")].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(",")));
+  const blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download="invoices-"+todayISO()+".csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 async function deleteInvoice(id){
   if(!confirm("Delete this invoice from history? This cannot be undone.")) return;
@@ -692,6 +808,9 @@ function initForm(){
   document.querySelector(".share").classList.toggle("hidden",fileShare);
   $("hintDesktop").classList.toggle("hidden",fileShare);
 
+  ["fMonth","fStatus","fWho"].forEach(id=>$(id).addEventListener("change",renderLedger));
+  $("fClient").addEventListener("input",renderLedger);
+  $("exportCsv").addEventListener("click",exportCsv);
   $("tabCreate").addEventListener("click",()=>switchTab("create"));
   $("tabHistory").addEventListener("click",()=>switchTab("history"));
   addItem("",1,"");
