@@ -188,6 +188,18 @@
   table.hist .pill.overdue{background:#fdecea;color:#c0392b;}
   table.hist .pill:hover{filter:brightness(0.96);}
   table.hist td .paidat{display:block;font-size:10px;color:var(--muted);margin-top:3px;}
+  .exp-add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px;}
+  .exp-add input,.exp-add select{width:auto;font-size:13px;padding:8px 10px;}
+  .exp-add #exAmount{width:110px;} .exp-add #exNote,.exp-add #exProject{flex:1;min-width:130px;}
+  .exp-add button{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap;}
+  .exp-add button:hover{background:#1b50e0;}
+  .catbars{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;}
+  .catbars .ct{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .catbar{display:grid;grid-template-columns:150px 1fr 110px;gap:10px;align-items:center;margin-bottom:9px;font-size:12.5px;}
+  .catbar:last-child{margin-bottom:0;}
+  .catbar .track{background:#eef0f3;border-radius:6px;height:10px;overflow:hidden;display:block;}
+  .catbar .fill{background:var(--accent);height:10px;border-radius:6px;display:block;}
+  .catbar .amt{text-align:right;font-weight:600;}
 
   /* ---------- Print ---------- */
   @page{size:A4;margin:0;}
@@ -223,6 +235,8 @@
     <div class="tabs">
       <button class="tab active" id="tabCreate">Create</button>
       <button class="tab" id="tabHistory">Invoices</button>
+      <button class="tab" id="tabExpenses">Expenses</button>
+      <button class="tab" id="tabOverview">Overview</button>
     </div>
     <div class="spacer"></div>
     <span class="badge hidden" id="guestBadge">Guest mode</span>
@@ -392,6 +406,38 @@
       <button class="exp" id="exportCsv">⬇︎ Export CSV</button>
     </div>
     <div id="histBody"></div>
+  </div>
+
+  <!-- EXPENSES -->
+  <div id="expensesView" class="history hidden">
+    <h2>Expenses</h2>
+    <div class="sub">Track and categorize what you spend.</div>
+    <div class="exp-add">
+      <input type="date" id="exDate" />
+      <input type="number" id="exAmount" min="0" step="0.01" placeholder="Amount" />
+      <select id="exCcy"><option>GEL</option><option>USD</option><option>EUR</option></select>
+      <select id="exCategory"></select>
+      <input id="exProject" placeholder="Project (optional)" />
+      <input id="exNote" placeholder="Note (optional)" />
+      <button id="exAdd">+ Add expense</button>
+    </div>
+    <div class="filters">
+      <select id="exMonth"></select>
+      <input id="exSearch" type="text" placeholder="Search note / category…" />
+      <button class="exp" id="exExport">⬇︎ Export CSV</button>
+    </div>
+    <div id="expCards" class="cards"></div>
+    <div id="expCats"></div>
+    <div id="expBody"></div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="overviewView" class="history hidden">
+    <h2>Overview</h2>
+    <div class="sub">Income vs expenses, and tax to set aside.</div>
+    <div class="filters"><select id="ovMonth"></select></div>
+    <div id="ovCards" class="cards"></div>
+    <div id="ovNote" class="sub" style="margin-top:6px;"></div>
   </div>
 </div>
 
@@ -772,14 +818,142 @@ function openInvoice(r){
   render();
 }
 
+/* ====================== EXPENSES ====================== */
+const EXP_CATEGORIES=["Rent","Food & groceries","Subscriptions","Marketing & ads","Taxes","Salaries & contractors","Transport","Office & equipment","Travel","Health","Fees & bank","Other"];
+let EXPENSES=[];
+function initExpenseControls(){
+  const sel=$("exCategory");
+  if(sel && !sel.options.length) sel.innerHTML=EXP_CATEGORIES.map(c=>"<option>"+c+"</option>").join("");
+  if($("exDate") && !$("exDate").value) $("exDate").value=todayISO();
+}
+async function loadExpenses(){
+  initExpenseControls();
+  const body=$("expBody"); body.innerHTML='<div class="empty">Loading…</div>'; $("expCards").innerHTML=""; $("expCats").innerHTML="";
+  const { data, error } = await sb.from("transactions").select("*").eq("direction","out").order("ts_date",{ascending:false});
+  if(error){ body.innerHTML='<div class="empty">Could not load: '+escapeHtml(error.message)+"</div>"; return; }
+  EXPENSES=data||[];
+  populateExpMonths();
+  renderExpenses();
+}
+function populateExpMonths(){
+  const months=[...new Set(EXPENSES.map(r=>monthKey(r.ts_date)).filter(Boolean))].sort().reverse();
+  const sel=$("exMonth"), cur=sel.value;
+  sel.innerHTML='<option value="">All months</option>'+months.map(m=>'<option value="'+m+'">'+monthLabel(m)+"</option>").join("");
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+function expFiltered(){
+  const m=$("exMonth").value, q=$("exSearch").value.trim().toLowerCase();
+  return EXPENSES.filter(r=>{
+    if(m && monthKey(r.ts_date)!==m) return false;
+    if(q && !(((r.category||"")+" "+(r.note||"")+" "+(r.project||"")).toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function renderExpenses(){
+  const rows=expFiltered();
+  const byCcy=sumByCurrency(rows.map(r=>({currency:r.currency,total:Number(r.amount||0)})));
+  $("expCards").innerHTML=
+    '<div class="card out"><div class="lab">Spent</div><div class="val">'+fmtMulti(byCcy)+"</div></div>"+
+    '<div class="card"><div class="lab">Transactions</div><div class="val">'+rows.length+"</div></div>";
+  // by-category bars in the most-used currency
+  const mainCcy=Object.keys(byCcy).sort((a,b)=>byCcy[b]-byCcy[a])[0];
+  if(mainCcy){
+    const cat={};
+    rows.filter(r=>(r.currency||"")===mainCcy).forEach(r=>{ const c=r.category||"Other"; cat[c]=(cat[c]||0)+Number(r.amount||0); });
+    const arr=Object.keys(cat).map(c=>({c,v:cat[c]})).sort((a,b)=>b.v-a.v);
+    const max=arr.length?arr[0].v:0;
+    if(arr.length) $("expCats").innerHTML='<div class="catbars"><div class="ct">By category ('+mainCcy+')</div>'+
+      arr.map(x=>'<div class="catbar"><span>'+escapeHtml(x.c)+'</span><span class="track"><span class="fill" style="width:'+(max?Math.round(x.v/max*100):0)+'%"></span></span><span class="amt">'+fmtMoney(x.v,mainCcy)+"</span></div>").join("")+"</div>";
+    else $("expCats").innerHTML="";
+  } else $("expCats").innerHTML="";
+  // table
+  const body=$("expBody");
+  if(!rows.length){ body.innerHTML='<div class="empty">'+(EXPENSES.length?"No expenses match the filters.":"No expenses yet — add one above.")+"</div>"; return; }
+  let h='<table class="hist"><thead><tr><th>Date</th><th>Category</th><th>Project</th><th>Note</th><th class="r">Amount</th><th></th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    h+="<tr><td>"+fmtDate(r.ts_date)+"</td>"+
+       "<td>"+escapeHtml(r.category||"—")+"</td>"+
+       "<td>"+escapeHtml(r.project||"")+"</td>"+
+       "<td>"+escapeHtml(r.note||"")+"</td>"+
+       '<td class="r">'+fmtMoney(Number(r.amount||0),r.currency||"GEL")+"</td>"+
+       '<td class="r"><button class="del-row" data-id="'+r.id+'" title="Delete">✕</button></td></tr>';
+  });
+  h+="</tbody></table>"; body.innerHTML=h;
+  body.querySelectorAll(".del-row").forEach(btn=>btn.addEventListener("click",()=>deleteExpense(btn.dataset.id)));
+}
+async function addExpense(){
+  const amount=parseFloat($("exAmount").value);
+  if(!$("exDate").value || !(amount>0)){ alert("Enter a date and amount."); return; }
+  $("exAdd").disabled=true;
+  const row={ ts_date:$("exDate").value, direction:"out", amount:amount, currency:$("exCcy").value,
+    category:$("exCategory").value, project:$("exProject").value.trim()||null, note:$("exNote").value.trim()||null, source:"manual" };
+  const { error } = await sb.from("transactions").insert(row);
+  $("exAdd").disabled=false;
+  if(error){ alert("Could not save: "+error.message); return; }
+  $("exAmount").value=""; $("exProject").value=""; $("exNote").value="";
+  loadExpenses();
+}
+async function deleteExpense(id){
+  if(!confirm("Delete this expense?")) return;
+  const { error } = await sb.from("transactions").delete().eq("id",id);
+  if(error){ alert("Could not delete: "+error.message); return; }
+  loadExpenses();
+}
+function exportExpenses(){
+  const rows=expFiltered();
+  if(!rows.length){ alert("Nothing to export."); return; }
+  const cols=["ts_date","category","project","note","currency","amount","source"];
+  const esc=v=>{ v=(v==null?"":String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const lines=[cols.join(",")].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(",")));
+  const blob=new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download="expenses-"+todayISO()+".csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+/* ====================== OVERVIEW ====================== */
+let OV_INV=[], OV_EXP=[];
+async function loadOverview(){
+  $("ovCards").innerHTML='<div class="empty">Loading…</div>'; $("ovNote").textContent="";
+  const [inv,exp]=await Promise.all([
+    sb.from("invoices").select("issue_date,currency,total"),
+    sb.from("transactions").select("ts_date,currency,amount,direction")
+  ]);
+  if(inv.error||exp.error){ $("ovCards").innerHTML='<div class="empty">Could not load: '+escapeHtml((inv.error||exp.error).message)+"</div>"; return; }
+  OV_INV=inv.data||[]; OV_EXP=(exp.data||[]).filter(r=>r.direction==="out");
+  populateOvMonths();
+  renderOverview();
+}
+function populateOvMonths(){
+  const months=[...new Set(OV_INV.map(r=>monthKey(r.issue_date)).concat(OV_EXP.map(r=>monthKey(r.ts_date))).filter(Boolean))].sort().reverse();
+  const sel=$("ovMonth"), cur=sel.value;
+  sel.innerHTML='<option value="">All time</option>'+months.map(m=>'<option value="'+m+'">'+monthLabel(m)+"</option>").join("");
+  const want=cur||monthKey(todayISO());
+  sel.value=[...sel.options].some(o=>o.value===want)?want:"";
+}
+function renderOverview(){
+  const m=$("ovMonth").value;
+  const inv=OV_INV.filter(r=>!m||monthKey(r.issue_date)===m);
+  const exp=OV_EXP.filter(r=>!m||monthKey(r.ts_date)===m);
+  const income=sumByCurrency(inv.map(r=>({currency:r.currency,total:Number(r.total||0)})));
+  const spent=sumByCurrency(exp.map(r=>({currency:r.currency,total:Number(r.amount||0)})));
+  const net={}; const tax={};
+  Object.keys(income).forEach(c=>{ net[c]=(net[c]||0)+income[c]; tax[c]=(tax[c]||0)+income[c]*0.01; });
+  Object.keys(spent).forEach(c=>{ net[c]=(net[c]||0)-spent[c]; });
+  $("ovCards").innerHTML=
+    '<div class="card paid"><div class="lab">Income (invoiced)</div><div class="val">'+fmtMulti(income)+"</div></div>"+
+    '<div class="card out"><div class="lab">Expenses</div><div class="val">'+fmtMulti(spent)+"</div></div>"+
+    '<div class="card"><div class="lab">Net</div><div class="val">'+fmtMulti(net)+"</div></div>"+
+    '<div class="card"><div class="lab">Tax to set aside (1%)</div><div class="val">'+fmtMulti(tax)+"</div></div>";
+  $("ovNote").textContent="Net = income − expenses, per currency. The 1% small-business tax is on turnover and is declared monthly in GEL (convert at the rate on the payment day).";
+}
+
 /* ====================== TABS / VIEWS ====================== */
 function switchTab(which){
-  const create=which==="create";
-  $("createView").classList.toggle("hidden",!create);
-  $("historyView").classList.toggle("hidden",create);
-  $("tabCreate").classList.toggle("active",create);
-  $("tabHistory").classList.toggle("active",!create);
-  if(!create) loadHistory();
+  const map={create:["createView","tabCreate"],history:["historyView","tabHistory"],expenses:["expensesView","tabExpenses"],overview:["overviewView","tabOverview"]};
+  Object.keys(map).forEach(k=>{ $(map[k][0]).classList.toggle("hidden",k!==which); $(map[k][1]).classList.toggle("active",k===which); });
+  if(which==="history") loadHistory();
+  if(which==="expenses") loadExpenses();
+  if(which==="overview") loadOverview();
 }
 
 /* ====================== INIT FORM ====================== */
@@ -811,8 +985,15 @@ function initForm(){
   ["fMonth","fStatus","fWho"].forEach(id=>$(id).addEventListener("change",renderLedger));
   $("fClient").addEventListener("input",renderLedger);
   $("exportCsv").addEventListener("click",exportCsv);
+  $("exAdd").addEventListener("click",addExpense);
+  ["exMonth"].forEach(id=>$(id).addEventListener("change",renderExpenses));
+  $("exSearch").addEventListener("input",renderExpenses);
+  $("exExport").addEventListener("click",exportExpenses);
+  $("ovMonth").addEventListener("change",renderOverview);
   $("tabCreate").addEventListener("click",()=>switchTab("create"));
   $("tabHistory").addEventListener("click",()=>switchTab("history"));
+  $("tabExpenses").addEventListener("click",()=>switchTab("expenses"));
+  $("tabOverview").addEventListener("click",()=>switchTab("overview"));
   addItem("",1,"");
   refreshInvoiceNo();
 }
@@ -824,6 +1005,8 @@ function enterApp(mode){
   $("appView").classList.remove("hidden");
   const guest=(mode==="guest");
   $("tabHistory").classList.toggle("hidden",guest);
+  $("tabExpenses").classList.toggle("hidden",guest);
+  $("tabOverview").classList.toggle("hidden",guest);
   $("logoutBtn").classList.toggle("hidden",guest);
   $("guestBadge").classList.toggle("hidden",!guest);
   $("guestBadge").textContent = GUEST_NAME ? ("Guest · "+GUEST_NAME) : "Guest mode";
