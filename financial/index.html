@@ -281,7 +281,9 @@
       <div class="actions">
         <button class="save" id="saveBtn">✓ Save invoice</button>
         <button class="print" id="printBtn">⬇︎ Download PDF</button>
-        <div class="hint">Save records it to history &amp; assigns the №. Download opens print → “Save as PDF”.</div>
+        <button class="print hidden" id="sharePdfBtn" style="margin-top:8px;">📤 Share PDF</button>
+        <div class="hint" id="hintDesktop">Save records it &amp; assigns the №. Telegram / WhatsApp / Email open a ready message — attach the downloaded PDF.</div>
+        <div class="hint hidden" id="hintMobile">Save records it &amp; assigns the №. “Share PDF” opens your phone’s share sheet with the file attached.</div>
         <div class="share">
           <button id="shareTg" title="Open Telegram">
             <svg viewBox="0 0 24 24" fill="#229ED9"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71l-4.14-3.05-1.99 1.93c-.23.23-.42.42-.84.42z"/></svg>
@@ -363,6 +365,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
 <script>
 "use strict";
 
@@ -412,11 +415,12 @@ function fmtDate(v){ if(!v)return "—"; const d=new Date(v+"T00:00:00"); if(isN
 
 function buildServiceSelect(selectedText){
   const sel=document.createElement("select");
-  const c=document.createElement("option"); c.value="__custom__"; c.textContent="✏️  Custom text…"; sel.appendChild(c);
+  const ph=document.createElement("option"); ph.value=""; ph.textContent="Select payment purpose…"; ph.disabled=true; ph.selected=true; sel.appendChild(ph);
   for(const g in SERVICES){ const og=document.createElement("optgroup"); og.label=g;
     SERVICES[g].forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent=s; if(s===selectedText)o.selected=true; og.appendChild(o); });
     sel.appendChild(og);
   }
+  const c=document.createElement("option"); c.value="__custom__"; c.textContent="✏️  Custom text…"; sel.appendChild(c);
   return sel;
 }
 
@@ -567,6 +571,40 @@ function buildShareBody(){
     "grinbergartgroup@gmail.com · +995585889601 · grinbergart.com"].join("\n");
 }
 
+/* ====================== PDF + NATIVE SHARE (mobile) ====================== */
+function canShareFiles(){
+  try{
+    if(!navigator.canShare) return false;
+    const f=new File([new Blob([" "],{type:"application/pdf"})],"t.pdf",{type:"application/pdf"});
+    return navigator.canShare({ files:[f] });
+  }catch(e){ return false; }
+}
+async function generatePdfBlob(){
+  const opt={ margin:0, image:{type:"jpeg",quality:0.98},
+    html2canvas:{scale:2, backgroundColor:"#ffffff", useCORS:true},
+    jsPDF:{unit:"mm", format:"a4", orientation:"portrait"} };
+  return await html2pdf().set(opt).from($("paper")).outputPdf("blob");
+}
+async function sharePdf(){
+  if(typeof html2pdf==="undefined"){ showSave("PDF library not loaded — check connection.","err"); return; }
+  $("sharePdfBtn").disabled=true; showSave("Preparing PDF…","");
+  try{
+    const blob=await generatePdfBlob();
+    const file=new File([blob], (($("invNo").value||"invoice")+".pdf"), {type:"application/pdf"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({ files:[file], title:buildShareSubject(), text:buildShareBody() });
+      showSave("Shared ✓","ok");
+    }else{
+      const url=URL.createObjectURL(blob); const a=document.createElement("a");
+      a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showSave("PDF downloaded.","ok");
+    }
+  }catch(e){
+    if(e && e.name==="AbortError"){ showSave("",""); }
+    else{ showSave("Share failed: "+(e.message||e),"err"); }
+  }finally{ $("sharePdfBtn").disabled=false; }
+}
+
 /* ====================== HISTORY ====================== */
 async function loadHistory(){
   const body=$("histBody"); body.innerHTML='<div class="empty">Loading…</div>';
@@ -644,6 +682,15 @@ function initForm(){
   $("shareTg").addEventListener("click",()=>window.open("https://t.me/share/url?url="+encodeURIComponent(" ")+"&text="+encodeURIComponent(buildShareBody()),"_blank"));
   $("shareWa").addEventListener("click",()=>window.open("https://wa.me/?text="+encodeURIComponent(buildShareBody()),"_blank"));
   $("shareMail").addEventListener("click",()=>{ window.location.href="mailto:?subject="+encodeURIComponent(buildShareSubject())+"&body="+encodeURIComponent(buildShareBody()); });
+  $("sharePdfBtn").addEventListener("click",sharePdf);
+
+  // Device-aware sharing: phone → "Share PDF" with native file sheet; desktop → text buttons.
+  const fileShare=canShareFiles();
+  $("sharePdfBtn").classList.toggle("hidden",!fileShare);
+  $("hintMobile").classList.toggle("hidden",!fileShare);
+  document.querySelector(".share").classList.toggle("hidden",fileShare);
+  $("hintDesktop").classList.toggle("hidden",fileShare);
+
   $("tabCreate").addEventListener("click",()=>switchTab("create"));
   $("tabHistory").addEventListener("click",()=>switchTab("history"));
   addItem("",1,"");
