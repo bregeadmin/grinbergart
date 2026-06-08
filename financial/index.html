@@ -200,6 +200,15 @@
   .catbar .track{background:#eef0f3;border-radius:6px;height:10px;overflow:hidden;display:block;}
   .catbar .fill{background:var(--accent);height:10px;border-radius:6px;display:block;}
   .catbar .amt{text-align:right;font-weight:600;}
+  .review-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 12px;}
+  .review-head .recon{font-size:13px;font-weight:600;}
+  .review-head .recon.ok{color:#11a36b;} .review-head .recon.bad{color:#c0392b;}
+  .review-head .grow{flex:1;}
+  .review-head button{border:none;border-radius:9px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer;}
+  .review-head .imp{background:#11a36b;color:#fff;} .review-head .imp:hover{background:#0e8d5d;}
+  .review-head .cancel{background:#fff;border:1px solid var(--line);color:var(--muted);}
+  table.hist td select{width:auto;font-size:12px;padding:5px 8px;}
+  table.hist td input[type=checkbox]{width:auto;}
 
   /* ---------- Print ---------- */
   @page{size:A4;margin:0;}
@@ -420,7 +429,11 @@
       <input id="exProject" placeholder="Project (optional)" />
       <input id="exNote" placeholder="Note (optional)" />
       <button id="exAdd">+ Add expense</button>
+      <input type="file" id="exFile" accept="application/pdf" style="display:none" />
+      <button id="exImportBtn" style="background:#fff;color:var(--accent);border:1px solid var(--line);">⬇︎ Import TBC statement (PDF)</button>
+      <span id="exImportMsg" class="hint" style="margin:0;"></span>
     </div>
+    <div id="exReview" class="hidden"></div>
     <div class="filters">
       <select id="exMonth"></select>
       <input id="exSearch" type="text" placeholder="Search note / category…" />
@@ -443,6 +456,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
 "use strict";
 
@@ -910,6 +924,123 @@ function exportExpenses(){
   a.href=url; a.download="expenses-"+todayISO()+".csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
+/* ====================== STATEMENT IMPORT (TBC PDF) ====================== */
+const CAT_RULES=[
+  [/apple\.com|icloud|openai|chatgpt|claude|anthropic|figma|readymag|notion|github|vercel|adobe|google|spotify|netflix|youtube|zoom|midjourney|canva|telegram premium/i,"Subscriptions"],
+  [/facebook|instagram|\bmeta\b|tiktok|google ads|\bads\b|advertis/i,"Marketing & ads"],
+  [/wolt|glovo|bolt food|restaurant|cafe|coffee|bar\b|supermarket|carrefour|spar|magniti|nikora|goodwill|food/i,"Food & groceries"],
+  [/\bbolt\b|uber|yandex|taxi|\bfuel\b|petrol|gas station|wizz|ryanair|aviasales|skyscanner|flight/i,"Transport"],
+  [/booking\.com|airbnb|hotel|hostel|\bavia\b|ticket/i,"Travel"],
+  [/\bfee\b|commission|საკომისიო/i,"Fees & bank"]
+];
+function guessCategory(d){ d=d||""; for(const [re,c] of CAT_RULES) if(re.test(d)) return c; return "Other"; }
+function isTransfer(d){ return /currency exchange|კონვერტაც|conversion|own account|between accounts|ანგარიშზე თანხის|private transfer|transfer within|გადარიცხვა|собственн/i.test(d||""); }
+function ddmmyyyyToISO(s){ const m=(s||"").match(/(\d{2})\/(\d{2})\/(\d{4})/); return m?(m[3]+"-"+m[2]+"-"+m[1]):null; }
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt(i))|0; } return (h>>>0).toString(36); }
+
+let REVIEW=[]; // parsed rows pending import
+
+async function parsePdfStatement(buf){
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let lines={}, full="";
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    tc.items.forEach(it=>{
+      full+=it.str+" ";
+      if(!it.str||!it.str.trim()) return;
+      const x=it.transform[4], y=Math.round(it.transform[5]), w=it.width||0;
+      const key=p+":"+y;
+      (lines[key]=lines[key]||[]).push({s:it.str,x0:x,x1:x+w});
+    });
+  }
+  // currency + bank totals from the summary text
+  const ccyM=full.match(/Opening Balance[^A-Z]*([A-Z]{3})/) || full.match(/([A-Z]{3})\s*$/);
+  const currency=(ccyM?ccyM[1]:"USD");
+  const numAfter=(label)=>{ const m=full.match(label); return m?parseFloat(m[1].replace(/,/g,"")):null; };
+  const bankOut=numAfter(/Total Paid out\s*([\d,]+\.\d{2})/i);
+  const bankIn=numAfter(/Total Paid in\s*([\d,]+\.\d{2})/i);
+  // walk lines, detect date rows, classify amounts by column x
+  const NUM=/^-?[0-9][0-9,]*\.[0-9]{2}$/, DATE=/^(\d{2}\/\d{2}\/\d{4})/;
+  const txns=[];
+  Object.keys(lines).forEach(key=>{
+    const row=lines[key].sort((a,b)=>a.x0-b.x0);
+    const d=row.find(w=>w.x0<115 && DATE.test(w.s.trim()));
+    if(!d) return;
+    let out=null,inc=null,desc=[];
+    row.forEach(w=>{
+      const t=w.s.replace("USD","").trim();
+      if(w.x1>640 && NUM.test(t)){
+        const v=parseFloat(t.replace(/,/g,""));
+        if(w.x1<702) out=v; else if(w.x1<758) inc=v;
+      }else if(w.x0>104 && w.x0<362){ desc.push(w.s); }
+    });
+    txns.push({ date:ddmmyyyyToISO(d.s.match(DATE)[1]), out, in:inc, desc:desc.join(" ").trim() });
+  });
+  return { currency, bankOut, bankIn, txns };
+}
+
+async function handleStatementFile(file){
+  const msg=$("exImportMsg");
+  if(typeof pdfjsLib==="undefined"){ msg.textContent="PDF library not loaded."; return; }
+  msg.textContent="Reading statement…";
+  try{
+    const buf=await file.arrayBuffer();
+    const res=await parsePdfStatement(buf);
+    // expenses only (Paid Out), exclude transfers/conversions by default
+    const exp=res.txns.filter(t=>t.out!=null);
+    const parsedOut=exp.reduce((s,t)=>s+t.out,0);
+    REVIEW=exp.map(t=>({
+      include: !isTransfer(t.desc),
+      ts_date:t.date, amount:t.out, currency:res.currency,
+      category: isTransfer(t.desc)?"Fees & bank":guessCategory(t.desc),
+      note:(t.desc||"").slice(0,140), transfer:isTransfer(t.desc)
+    }));
+    const recon = res.bankOut!=null ? Math.abs(parsedOut-res.bankOut)<0.01 : null;
+    msg.textContent="";
+    renderReview(res, recon);
+  }catch(e){ msg.textContent="Could not read: "+(e.message||e); }
+}
+
+function renderReview(res, recon){
+  const box=$("exReview"); box.classList.remove("hidden");
+  const reconHtml = recon==null ? "" :
+    '<span class="recon '+(recon?"ok":"bad")+'">'+(recon?"✓ Totals reconcile with the statement":"⚠ Totals don’t match — review carefully")+"</span>";
+  let h='<div class="review-head">'+reconHtml+'<span class="grow"></span>'+
+    '<button class="cancel" id="rvCancel">Cancel</button>'+
+    '<button class="imp" id="rvImport">Import selected</button></div>';
+  h+='<table class="hist"><thead><tr><th></th><th>Date</th><th>Amount</th><th>Category</th><th>Description</th></tr></thead><tbody>';
+  REVIEW.forEach((r,i)=>{
+    h+='<tr><td><input type="checkbox" data-i="'+i+'" '+(r.include?"checked":"")+'></td>'+
+       "<td>"+fmtDate(r.ts_date)+"</td>"+
+       '<td class="r">'+fmtMoney(r.amount,r.currency)+"</td>"+
+       '<td><select data-cat="'+i+'">'+EXP_CATEGORIES.map(c=>'<option'+(c===r.category?" selected":"")+">"+c+"</option>").join("")+"</select></td>"+
+       "<td>"+escapeHtml(r.note)+(r.transfer?' <span class="who guest">transfer</span>':"")+"</td></tr>";
+  });
+  h+="</tbody></table>";
+  box.innerHTML=h;
+  box.querySelectorAll('input[type=checkbox]').forEach(c=>c.addEventListener("change",()=>{ REVIEW[+c.dataset.i].include=c.checked; }));
+  box.querySelectorAll('select[data-cat]').forEach(s=>s.addEventListener("change",()=>{ REVIEW[+s.dataset.cat].category=s.value; }));
+  $("rvCancel").addEventListener("click",()=>{ box.classList.add("hidden"); box.innerHTML=""; REVIEW=[]; });
+  $("rvImport").addEventListener("click",importReviewed);
+}
+
+async function importReviewed(){
+  const rows=REVIEW.filter(r=>r.include).map(r=>({
+    ts_date:r.ts_date, direction:"out", amount:r.amount, currency:r.currency,
+    category:r.category, note:r.note, source:"import-tbc",
+    ext_id:"tbc|"+r.ts_date+"|"+r.amount+"|"+hashStr(r.note)
+  }));
+  if(!rows.length){ alert("Nothing selected."); return; }
+  $("rvImport").disabled=true; $("rvImport").textContent="Importing…";
+  const { error } = await sb.from("transactions").upsert(rows,{onConflict:"ext_id",ignoreDuplicates:true});
+  $("rvImport").disabled=false; $("rvImport").textContent="Import selected";
+  if(error){ alert("Import failed: "+error.message); return; }
+  $("exReview").classList.add("hidden"); $("exReview").innerHTML=""; REVIEW=[];
+  $("exImportMsg").textContent="Imported ✓ (duplicates skipped)";
+  loadExpenses();
+}
+
 /* ====================== OVERVIEW ====================== */
 let OV_INV=[], OV_EXP=[];
 async function loadOverview(){
@@ -989,6 +1120,9 @@ function initForm(){
   ["exMonth"].forEach(id=>$(id).addEventListener("change",renderExpenses));
   $("exSearch").addEventListener("input",renderExpenses);
   $("exExport").addEventListener("click",exportExpenses);
+  if(typeof pdfjsLib!=="undefined") pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+  $("exImportBtn").addEventListener("click",()=>$("exFile").click());
+  $("exFile").addEventListener("change",e=>{ if(e.target.files[0]) handleStatementFile(e.target.files[0]); e.target.value=""; });
   $("ovMonth").addEventListener("change",renderOverview);
   $("tabCreate").addEventListener("click",()=>switchTab("create"));
   $("tabHistory").addEventListener("click",()=>switchTab("history"));
