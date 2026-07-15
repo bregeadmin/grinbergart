@@ -288,8 +288,9 @@
           </div>
           <div class="field"><label>Pay to account</label>
             <select id="account">
-              <option value="USD">USD account</option>
-              <option value="EUR">EUR account</option>
+              <option value="USD">TBC — USD account</option>
+              <option value="EUR">TBC — EUR account</option>
+              <option value="BOG">Bank of Georgia (Solo)</option>
             </select>
           </div>
         </div>
@@ -470,15 +471,21 @@ const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 /* ====================== STATIC DATA ====================== */
 const DEFAULT_SELLER_ADDR = "Georgia, Batumi, Pushkin Street #162, 6000";
 const BANKS = {
-  USD:{ iban:"GE94TB7935136110100016", intermediaries:[
+  USD:{ beneficiary:"P/E Artem Grinberg", bank:"JSC TBC Bank", place:"Tbilisi, Georgia", swift:"TBCBGE22",
+    iban:"GE94TB7935136110100016", acctCcy:"USD", intermediaries:[
     {bank:"Citibank N.A.",place:"New York, USA",swift:"CITIUS33"},
     {bank:"JPMorgan Chase Bank N.A.",place:"New York, USA",swift:"CHASUS33"}]},
-  EUR:{ iban:"GE67TB7935136110100017", intermediaries:[
+  EUR:{ beneficiary:"P/E Artem Grinberg", bank:"JSC TBC Bank", place:"Tbilisi, Georgia", swift:"TBCBGE22",
+    iban:"GE67TB7935136110100017", acctCcy:"EUR", intermediaries:[
     {bank:"J.P. Morgan SE",place:"Frankfurt am Main, Germany",swift:"CHASDEFX"},
-    {bank:"Commerzbank AG",place:"Frankfurt am Main, Germany",swift:"COBADEFF"}]}
+    {bank:"Commerzbank AG",place:"Frankfurt am Main, Germany",swift:"COBADEFF"}]},
+  BOG:{ beneficiary:"GRINBERG ARTEM", bank:"Bank of Georgia", place:"Tbilisi, Georgia", swift:"BAGAGE22",
+    iban:"GE14BG0000000545846136", acctCcy:null, // multi-currency account — shows the invoice currency
+    interByCcy:{
+      USD:[{bank:"Citibank N.A.",place:"New York, USA",swift:"CITIUS33"}],
+      EUR:[{bank:"Commerzbank",place:"Frankfurt, Germany",swift:"COBADEFF"}],
+      GBP:[{bank:"Citibank N.A.",place:"London, UK",swift:"CITIGB2L"}]}}
 };
-const BENEFICIARY="P/E Artem Grinberg", BENEFICIARY_BANK="JSC TBC Bank",
-      BENEFICIARY_BANK_PLACE="Tbilisi, Georgia", BENEFICIARY_BANK_SWIFT="TBCBGE22";
 const VAT_TEXT="No Georgian VAT is charged on this invoice — the supplier is a non-VAT payer. "+
   "The Client is a non-resident of Georgia. The services are provided remotely and the "+
   "results of the services are delivered to the Client electronically. The Parties confirm that the "+
@@ -594,16 +601,18 @@ function render(){
   const notes=$("notes").value.trim();
   $("pNotesWrap").style.display=notes?"block":"none"; $("pNotes").textContent=notes;
 
-  const b=BANKS[acct];
+  const b=BANKS[acct]||BANKS.USD;
+  const inter=b.intermediaries||(b.interByCcy&&b.interByCcy[ccy])||[];
   $("pBank").innerHTML=
-    '<span class="k">Beneficiary</span><span class="v"><b>'+BENEFICIARY+"</b></span>"+
+    '<span class="k">Beneficiary</span><span class="v"><b>'+b.beneficiary+"</b></span>"+
     '<span class="k">IBAN</span><span class="v"><b>'+b.iban+"</b></span>"+
-    '<span class="k">Bank</span><span class="v">'+BENEFICIARY_BANK+", "+BENEFICIARY_BANK_PLACE+"</span>"+
-    '<span class="k">SWIFT</span><span class="v"><b>'+BENEFICIARY_BANK_SWIFT+"</b></span>"+
-    '<span class="k">Currency</span><span class="v">'+acct+"</span>";
-  $("pInter").innerHTML=b.intermediaries.map(im=>
+    '<span class="k">Bank</span><span class="v">'+b.bank+", "+b.place+"</span>"+
+    '<span class="k">SWIFT</span><span class="v"><b>'+b.swift+"</b></span>"+
+    '<span class="k">Currency</span><span class="v">'+(b.acctCcy||ccy+" (multi-currency account)")+"</span>";
+  $("pInter").innerHTML=inter.map(im=>
     '<div class="imed"><div class="ititle">'+im.bank+"</div><div>"+im.place+"</div>"+
     '<div><span class="k">SWIFT</span> <b>'+im.swift+"</b></div></div>").join("");
+  $("pInter").parentElement.style.display=inter.length?"":"none";
   $("pVat").textContent=VAT_TEXT;
 
   // non-VAT legal clause only when "without VAT" is on
@@ -1097,7 +1106,7 @@ function initForm(){
   $("noVat").addEventListener("change",render);
   $("vatRate").addEventListener("change",render);
   $("vatCustom").addEventListener("input",render);
-  $("currency").addEventListener("change",()=>{ const c=$("currency").value; if(c==="USD"||c==="EUR")$("account").value=c; render(); });
+  $("currency").addEventListener("change",()=>{ const c=$("currency").value; if((c==="USD"||c==="EUR")&&$("account").value!=="BOG")$("account").value=c; render(); });
   $("addItem").addEventListener("click",()=>{ addItem("",1,""); render(); });
   $("saveBtn").addEventListener("click",saveInvoice);
   $("printBtn").addEventListener("click",()=>window.print());
