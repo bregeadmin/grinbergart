@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Учёт ремонта / Renovation budget</title>
+<style>
+  :root{
+    --bg:#f3f4f6; --card:#ffffff; --ink:#111827; --muted:#6b7280;
+    --line:#e5e7eb; --brand:#0f766e; --brand-d:#0b5c56;
+    --mat:#2563eb; --work:#9333ea; --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+    --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); font-size:16px; line-height:1.4;
+    -webkit-font-smoothing:antialiased; padding-bottom:calc(76px + var(--safe-b));
+  }
+  .app{max-width:560px;margin:0 auto;min-height:100vh;position:relative}
+  header.top{
+    position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;
+    padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 14px;box-shadow:var(--shadow);
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  header.top h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}
+  header.top .sub{font-size:12.5px;opacity:.85;margin-top:2px}
+  .langbtn{flex:0 0 auto;background:rgba(255,255,255,.18);border:none;color:#fff;font-weight:700;
+    font-size:13px;padding:8px 12px;border-radius:10px;cursor:pointer;font-family:inherit}
+  .langbtn:active{transform:scale(.96)}
+  main{padding:14px 14px 24px}
+  .view{display:none}
+  .view.active{display:block;animation:fade .18s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+  .card h2{margin:0 0 12px;font-size:15px;font-weight:700}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+  .bcard{position:relative;overflow:hidden}
+  .bcard .tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    padding:3px 10px;border-radius:999px;color:#fff}
+  .tag.mat{background:var(--mat)} .tag.work{background:var(--work)}
+  .bignum{font-size:26px;font-weight:800;margin:10px 0 2px;letter-spacing:-.5px}
+  .bignum small{font-size:14px;font-weight:600;color:var(--muted)}
+  .brow{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:8px}
+  .brow b{color:var(--ink);font-weight:700}
+  .bar{height:10px;border-radius:999px;background:var(--line);margin-top:10px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:999px;transition:width .4s ease}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .hint.warn{color:var(--warn);font-weight:600} .hint.bad{color:var(--bad);font-weight:700}
+
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{background:var(--card);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+  .kpi .lbl{font-size:12px;color:var(--muted)}
+  .kpi .val{font-size:18px;font-weight:800;margin-top:3px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;
+    font-family:inherit;font-size:15px;font-weight:600;border-radius:12px;padding:12px 16px;background:var(--line);color:var(--ink)}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.block{width:100%}
+  .btn.sm{padding:8px 12px;font-size:13.5px;border-radius:10px}
+  .btn.ghost{background:transparent;color:var(--brand)}
+  .btn:active{transform:scale(.98)}
+
+  .item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);margin-bottom:10px}
+  .thumb{width:46px;height:46px;border-radius:10px;flex:0 0 auto;background:var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .item .mid{flex:1;min-width:0}
+  .item .t1{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .t2{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .item .amt{font-weight:800;font-size:15px;white-space:nowrap}
+  .pill{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;color:#fff;vertical-align:middle}
+  .pill.mat{background:var(--mat)} .pill.work{background:var(--work)}
+
+  svg.i{display:inline-block;vertical-align:middle;flex:0 0 auto}
+  [data-icon]{display:inline-flex;align-items:center}
+  .thumb.mat{color:var(--mat)} .thumb.work{color:var(--work)}
+  .empty{text-align:center;color:var(--muted);padding:40px 16px}
+  .empty .em{margin-bottom:10px;color:#c3c8d0;display:flex;justify-content:center}
+
+  .daygroup{margin-bottom:16px}
+  .dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:2px 4px 8px}
+  .dayhead .dl{font-size:13.5px;font-weight:700;color:var(--ink);text-transform:capitalize}
+  .dayhead .dc{font-size:11.5px;color:var(--muted);font-weight:500;margin-left:6px;text-transform:none}
+  .dayhead .dsum{font-size:14px;font-weight:800;white-space:nowrap}
+
+  .filterbar{display:flex;gap:8px;margin-bottom:12px}
+  .seg{display:flex;background:var(--line);border-radius:12px;padding:3px;flex:1}
+  .seg button{flex:1;border:none;background:transparent;padding:8px 6px;font-size:13px;font-weight:600;color:var(--muted);border-radius:9px;cursor:pointer;font-family:inherit}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  input.search{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:15px;font-family:inherit;background:#fff}
+
+  .shop-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);margin-bottom:10px}
+  .chk{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);flex:0 0 auto;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#fff}
+  .chk.done{background:var(--ok);border-color:var(--ok)}
+  .shop-item.done .t1{text-decoration:line-through;color:var(--muted)}
+
+  .fab{position:fixed;right:16px;bottom:calc(84px + var(--safe-b));z-index:30;width:58px;height:58px;border-radius:50%;
+    background:var(--brand);color:#fff;border:none;font-size:30px;line-height:1;box-shadow:0 6px 16px rgba(15,118,110,.45);cursor:pointer}
+  .fab:active{transform:scale(.94)}
+
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:25;background:#fff;border-top:1px solid var(--line);
+    display:flex;max-width:560px;margin:0 auto;padding-bottom:var(--safe-b)}
+  nav.tabs button{flex:1;border:none;background:none;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-size:11px;color:var(--muted);font-family:inherit;cursor:pointer;font-weight:600}
+  nav.tabs button .ic{font-size:21px;line-height:1}
+  nav.tabs button.on{color:var(--brand)}
+
+  .sheet-bg{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:40;display:none;align-items:flex-end;justify-content:center}
+  .sheet-bg.open{display:flex;animation:fade .15s ease}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;
+    padding:8px 16px calc(24px + var(--safe-b));animation:up .22s cubic-bezier(.2,.8,.2,1)}
+  @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+  .grab{width:40px;height:5px;background:var(--line);border-radius:999px;margin:8px auto 12px}
+  .sheet h3{margin:2px 0 14px;font-size:18px}
+  label.fld{display:block;margin-bottom:12px}
+  label.fld > span{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .inp{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;background:#fff}
+  .inp:focus{outline:none;border-color:var(--brand)}
+  textarea.inp{resize:vertical;min-height:52px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .typesel{display:flex;gap:8px;margin-bottom:12px}
+  .typesel button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border:2px solid var(--line);background:#fff;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;color:var(--muted);font-family:inherit}
+  .typesel button.on.mat{border-color:var(--mat);color:var(--mat);background:#eff6ff}
+  .typesel button.on.work{border-color:var(--work);color:var(--work);background:#faf5ff}
+
+  .photo-zone{border:2px dashed var(--line);border-radius:14px;padding:14px;text-align:center;margin-bottom:12px}
+  .photo-zone img{max-width:100%;max-height:220px;border-radius:10px;margin-bottom:10px}
+  .ocr-status{font-size:12.5px;color:var(--muted);margin-top:6px}
+  .amount-suggest{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center}
+  .amount-suggest button{border:1px solid var(--brand);color:var(--brand);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+
+  .divider{height:1px;background:var(--line);margin:14px 0}
+  .danger{color:var(--bad)}
+  .toast{position:fixed;bottom:calc(96px + var(--safe-b));left:50%;transform:translateX(-50%);
+    background:#111827;color:#fff;padding:10px 16px;border-radius:12px;font-size:13.5px;z-index:120;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+  .toast.show{opacity:1}
+  .mini{font-size:12px;color:var(--muted)}
+  .catchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .catchips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  .catchips button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+  .codebox{font-size:24px;font-weight:800;letter-spacing:3px;color:var(--brand)}
+
+  /* onboarding */
+  .onboard{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,var(--brand),var(--brand-d));
+    display:none;align-items:center;justify-content:center;padding:24px}
+  .onboard.show{display:flex}
+  .ob-card{background:#fff;border-radius:22px;padding:26px 22px;width:100%;max-width:410px;box-shadow:0 12px 44px rgba(0,0,0,.28)}
+  .ob-logo{width:58px;height:58px;border-radius:16px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+  .ob-card h2{margin:0 0 6px;text-align:center;font-size:21px}
+  .ob-card .obp{text-align:center;margin:0 0 20px}
+  .ob-status{margin-top:12px;text-align:center;min-height:18px;font-weight:600}
+  .ob-status.err{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <h1 id="objName">Учёт ремонта</h1>
+      <div class="sub" data-i18n="header_sub"></div>
+    </div>
+    <button class="langbtn" id="langBtn" onclick="toggleLang()">EN</button>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="view active" id="v-home">
+      <div class="card bcard" id="card-mat"></div>
+      <div class="card bcard" id="card-work"></div>
+      <div class="kpis" style="margin-bottom:14px">
+        <div class="kpi"><div class="lbl" data-i18n="kpi_spent"></div><div class="val" id="kpiSpent">—</div></div>
+        <div class="kpi"><div class="lbl" data-i18n="kpi_left"></div><div class="val" id="kpiLeft">—</div></div>
+      </div>
+      <div class="card" id="forecastCard" style="display:none">
+        <h2 data-i18n="forecast_title"></h2>
+        <div id="forecastBody"></div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="recent_title"></h2>
+        <div id="recentList"></div>
+        <button class="btn ghost block" data-i18n="all_receipts" onclick="go('receipts')" style="margin-top:4px"></button>
+      </div>
+    </section>
+
+    <!-- RECEIPTS -->
+    <section class="view" id="v-receipts">
+      <div class="filterbar">
+        <div class="seg" id="recSeg">
+          <button data-f="all" class="on" data-i18n="seg_all"></button>
+          <button data-f="material" data-i18n="mat"></button>
+          <button data-f="work" data-i18n="work"></button>
+        </div>
+      </div>
+      <input class="search" id="recSearch" data-i18n-ph="search_ph" oninput="renderReceipts()">
+      <div id="recTotals" class="mini" style="margin:10px 2px"></div>
+      <div id="receiptList"></div>
+    </section>
+
+    <!-- SHOP -->
+    <section class="view" id="v-shop">
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="mini" data-i18n="shop_need"></div>
+            <div class="val" id="shopPlanned" style="font-size:22px;font-weight:800">—</div>
+          </div>
+          <button class="btn primary sm" data-i18n="shop_add" onclick="openShop()"></button>
+        </div>
+        <div id="shopVariance" style="display:none"></div>
+      </div>
+      <div class="filterbar">
+        <div class="seg" id="shopSeg">
+          <button data-f="todo" class="on" data-i18n="seg_todo"></button>
+          <button data-f="done" data-i18n="seg_done"></button>
+          <button data-f="all" data-i18n="seg_all"></button>
+        </div>
+      </div>
+      <div id="shopList"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="v-set">
+      <div class="card">
+        <h2 data-i18n="sync_title"></h2>
+        <div class="mini" data-i18n="sync_code_lbl" style="margin-bottom:6px"></div>
+        <div class="row" style="margin-bottom:14px">
+          <div class="codebox" id="setCode">—</div>
+          <button class="btn sm" onclick="shareCode()"><span data-icon="share" data-isize="16"></span><span data-i18n="sync_share"></span></button>
+        </div>
+        <label class="fld"><span data-i18n="sync_name"></span>
+          <input class="inp" id="setMeName" data-i18n-ph="sync_name_ph"></label>
+        <button class="btn primary block" onclick="saveMeName()" data-i18n="save"></button>
+        <button class="btn block danger" style="margin-top:10px" onclick="leaveProjectConfirm()" data-i18n="sync_leave"></button>
+      </div>
+      <div class="card">
+        <h2 data-i18n="set_obj_title"></h2>
+        <label class="fld"><span data-i18n="set_name"></span>
+          <input class="inp" id="setName" data-i18n-ph="set_name_ph"></label>
+        <label class="fld"><span data-i18n="set_cur"></span>
+          <select class="inp" id="setCur">
+            <option value="₾">₾ GEL — ლარი / лари</option>
+            <option value="$">$ USD</option>
+            <option value="€">€ EUR</option>
+            <option value="₽">₽ RUB</option>
+          </select></label>
+        <div class="two">
+          <label class="fld"><span data-i18n="set_bud_mat"></span>
+            <input class="inp" id="setBudMat" type="number" inputmode="decimal" placeholder="0"></label>
+          <label class="fld"><span data-i18n="set_bud_work"></span>
+            <input class="inp" id="setBudWork" type="number" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <button class="btn primary block" data-i18n="save" onclick="saveSettings()"></button>
+      </div>
+      <div class="card">
+        <h2 data-i18n="set_data_title"></h2>
+        <p class="mini" style="margin-top:0" data-i18n="set_data_note"></p>
+        <button class="btn block" onclick="exportJSON()" style="margin-bottom:10px"><span data-icon="download" data-isize="18"></span><span data-i18n="backup_btn"></span></button>
+        <button class="btn block" onclick="exportCSV()" style="margin-bottom:10px"><span data-icon="grid" data-isize="18"></span><span data-i18n="csv_btn"></span></button>
+        <button class="btn block danger" onclick="wipe()"><span data-icon="trash" data-isize="18"></span><span data-i18n="wipe_btn"></span></button>
+      </div>
+      <div class="card">
+        <h2 data-i18n="howto_title"></h2>
+        <p class="mini" style="margin:0" data-i18n="howto_body"></p>
+        <p class="mini" style="margin-top:10px" data-i18n="howto_tip"></p>
+      </div>
+    </section>
+  </main>
+
+  <button class="fab" id="fab" onclick="openReceipt()"><span data-icon="plus" data-isize="26"></span></button>
+
+  <nav class="tabs">
+    <button data-v="home" class="on" onclick="go('home')"><span class="ic" data-icon="home" data-isize="23"></span><span data-i18n="tab_home"></span></button>
+    <button data-v="receipts" onclick="go('receipts')"><span class="ic" data-icon="receipt" data-isize="23"></span><span data-i18n="tab_receipts"></span></button>
+    <button data-v="shop" onclick="go('shop')"><span class="ic" data-icon="cart" data-isize="23"></span><span data-i18n="tab_shop"></span></button>
+    <button data-v="set" onclick="go('set')"><span class="ic" data-icon="settings" data-isize="23"></span><span data-i18n="tab_set"></span></button>
+  </nav>
+</div>
+
+<!-- ONBOARDING -->
+<div class="onboard" id="onboard">
+  <div class="ob-card">
+    <div class="ob-logo"><span data-icon="receipt" data-isize="28"></span></div>
+    <h2 data-i18n="ob_title"></h2>
+    <p class="mini obp" data-i18n="ob_sub"></p>
+    <div id="obCreate">
+      <label class="fld"><span data-i18n="ob_name"></span>
+        <input class="inp" id="obName" data-i18n-ph="set_name_ph"></label>
+      <button class="btn primary block" onclick="obCreate()" data-i18n="ob_create_btn"></button>
+      <button class="btn ghost block" style="margin-top:8px" onclick="obShow('join')" data-i18n="ob_have_code"></button>
+    </div>
+    <div id="obJoin" style="display:none">
+      <label class="fld"><span data-i18n="ob_code"></span>
+        <input class="inp" id="obCode" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:2px;font-weight:700" placeholder="ABC123"></label>
+      <button class="btn primary block" onclick="obJoin()" data-i18n="ob_join_btn"></button>
+      <button class="btn ghost block" style="margin-top:8px" onclick="obShow('create')" data-i18n="ob_new"></button>
+    </div>
+    <div class="ob-status mini" id="obStatus"></div>
+  </div>
+</div>
+
+<!-- SHEET: receipt -->
+<div class="sheet-bg" id="sheetReceipt">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3 id="recTitle"></h3>
+    <div class="typesel" id="recType">
+      <button data-t="material" class="on mat"><span data-icon="box" data-isize="18"></span><span data-i18n="mat"></span></button>
+      <button data-t="work" class="work"><span data-icon="wrench" data-isize="18"></span><span data-i18n="work"></span></button>
+    </div>
+
+    <div class="photo-zone" id="photoZone">
+      <div id="photoPreview"></div>
+      <label class="btn sm" style="margin-right:6px"><span data-icon="camera" data-isize="16"></span><span data-i18n="photo_btn"></span>
+        <input type="file" accept="image/*" capture="environment" style="display:none" id="photoInput" onchange="onPhoto(event)"></label>
+      <button class="btn sm" id="ocrBtn" style="display:none" onclick="runOCR()"></button>
+      <div class="ocr-status" id="ocrStatus"></div>
+      <div class="amount-suggest" id="amountSuggest"></div>
+    </div>
+
+    <div class="two">
+      <label class="fld"><span data-i18n="f_amount"></span>
+        <input class="inp" id="recAmount" type="number" inputmode="decimal" placeholder="0"></label>
+      <label class="fld"><span data-i18n="f_date"></span>
+        <input class="inp" id="recDate" type="date"></label>
+    </div>
+    <div id="budgetHint" class="mini" style="display:none;margin:-6px 2px 12px;color:var(--brand);font-weight:600"></div>
+    <label class="fld"><span data-i18n="f_cat"></span>
+      <input class="inp" id="recCat" list="catlist" data-i18n-ph="f_cat_ph">
+      <datalist id="catlist"></datalist>
+      <div class="catchips" id="catChips"></div>
+    </label>
+    <label class="fld"><span data-i18n="f_store"></span>
+      <input class="inp" id="recStore" data-i18n-ph="f_store_ph"></label>
+    <label class="fld"><span data-i18n="f_note"></span>
+      <textarea class="inp" id="recNote" data-i18n-ph="f_note_ph"></textarea></label>
+
+    <button class="btn primary block" data-i18n="save_receipt" onclick="saveReceipt()"></button>
+    <button class="btn block danger" id="recDelBtn" data-i18n="del_receipt" style="display:none;margin-top:10px" onclick="deleteReceipt()"></button>
+    <button class="btn ghost block" data-i18n="cancel" style="margin-top:6px" onclick="closeSheet('sheetReceipt')"></button>
+  </div>
+</div>
+
+<!-- SHEET: shopping -->
+<div class="sheet-bg" id="sheetShop">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3 id="shopTitle"></h3>
+    <div class="typesel" id="shopType">
+      <button data-t="material" class="on mat"><span data-icon="box" data-isize="18"></span><span data-i18n="mat"></span></button>
+      <button data-t="work" class="work"><span data-icon="wrench" data-isize="18"></span><span data-i18n="work"></span></button>
+    </div>
+    <label class="fld"><span data-i18n="shop_what"></span>
+      <input class="inp" id="shopName" data-i18n-ph="shop_what_ph"></label>
+    <div class="two">
+      <label class="fld"><span data-i18n="f_cat"></span>
+        <input class="inp" id="shopCat" list="catlist" data-i18n-ph="f_cat_ph"></label>
+      <label class="fld"><span data-i18n="shop_amount"></span>
+        <input class="inp" id="shopAmount" type="number" inputmode="decimal" placeholder="0"></label>
+    </div>
+    <button class="btn primary block" data-i18n="save" onclick="saveShop()"></button>
+    <button class="btn block primary" id="shopBuyBtn" style="display:none;margin-top:10px" onclick="shopToReceipt()"><span data-icon="check" data-isize="18"></span><span data-i18n="shop_buy"></span></button>
+    <button class="btn block danger" id="shopDelBtn" data-i18n="del" style="display:none;margin-top:10px" onclick="deleteShop()"></button>
+    <button class="btn ghost block" data-i18n="cancel" style="margin-top:6px" onclick="closeSheet('sheetShop')"></button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script>
+/* ============ Firebase config + Vision key ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBK6tx-Ntag_y9WSJn4O_mVyGq8f5ccp50",
+  authDomain: "regarepair-a3c31.firebaseapp.com",
+  projectId: "regarepair-a3c31",
+  storageBucket: "regarepair-a3c31.firebasestorage.app",
+  messagingSenderId: "1060088854665",
+  appId: "1:1060088854665:web:cb70757201c5e9c9aeae58"
+};
+/* OCR идёт через /api/vision — ключ Vision хранится серверной переменной на Vercel, в файле его нет */
+
+let fs=null;
+try{ firebase.initializeApp(firebaseConfig); }catch(e){}
+try{ fs=firebase.firestore(); fs.enablePersistence({synchronizeTabs:true}).catch(()=>{}); }catch(e){}
+try{ firebase.auth().signInAnonymously().catch(()=>{}); }catch(e){}
+
+/* ============ local prefs ============ */
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
+
+/* ============ i18n ============ */
+const T={
+  ru:{
+    header_sub:'Материалы и работы · остаток по бюджету',
+    tab_home:'Обзор', tab_receipts:'Чеки', tab_shop:'Закупки', tab_set:'Настройки',
+    mat:'Материалы', work:'Работы',
+    forecast_title:'Прогноз с учётом плана закупок', recent_title:'Последние чеки', all_receipts:'Все чеки →',
+    kpi_spent:'Всего потрачено', kpi_left:'Осталось всего',
+    seg_all:'Все', seg_todo:'Купить', seg_done:'Куплено',
+    search_ph:'Поиск: магазин, категория…',
+    shop_need:'Ещё нужно купить (не куплено)', shop_add:'+ Позиция',
+    set_obj_title:'Объект и бюджеты', set_name:'Название объекта', set_name_ph:'Напр. Квартира на Руставели',
+    set_cur:'Валюта', set_bud_mat:'Бюджет: материалы', set_bud_work:'Бюджет: работы', save:'Сохранить',
+    set_data_title:'Данные',
+    set_data_note:'Данные хранятся в облаке и синхронизируются у всех, у кого есть код объекта. Резервную копию можно выгрузить в файл.',
+    backup_btn:'Выгрузить резервную копию (.json)', csv_btn:'Экспорт чеков в Excel/CSV',
+    wipe_btn:'Очистить все данные объекта',
+    howto_title:'Как пользоваться',
+    howto_body:'Нажмите «+», чтобы добавить чек. Сфотографируйте чек — сумма распознаётся автоматически (проверьте её). Рабочие вносят чеки со своих телефонов по коду объекта, а вы сразу видите всё на «Обзоре». В «Закупках» ведите план будущих покупок с бюджетом.',
+    howto_tip:'Совет: откройте страницу на телефоне и добавьте на главный экран («Поделиться» → «На экран Домой»), чтобы открывать как приложение.',
+    rec_new:'Новый чек', rec_edit:'Чек',
+    photo_btn:'Фото чека', ocr_btn:'Распознать сумму',
+    f_amount:'Сумма', f_date:'Дата', f_cat:'Категория', f_cat_ph:'Напр. Сантехника',
+    f_store:'Магазин / поставщик', f_store_ph:'Напр. Domino, рынок…',
+    f_note:'Комментарий (необязательно)', f_note_ph:'Что купили…',
+    save_receipt:'Сохранить чек', del_receipt:'Удалить чек', cancel:'Отмена',
+    shop_new:'Что купить', shop_edit:'Позиция', shop_what:'Что нужно', shop_what_ph:'Напр. Плитка 60×60, 15 м²',
+    shop_amount:'Бюджет (макс.)', shop_buy:'Купить — внести сумму', del:'Удалить',
+    budget_max_short:'до', plan_short:'план', fact_short:'факт',
+    saved_word:'экономия', over_word2:'перерасход', on_budget:'точно в бюджет',
+    var_title:'По купленному из плана:', var_saved:'сэкономлено', var_over:'перерасход', var_net:'итог',
+    budget_max_hint:p=>`Макс. бюджет по плану: ${p}`,
+    confirm_unbuy:'Отменить покупку? Связанный чек тоже будет удалён.',
+    t_unbought:'Покупка отменена',
+    left_word:'осталось', over_word:'перерасход',
+    remains:'останется', wont_fit:'не хватит',
+    spent_lbl:'Потрачено', budget_lbl:'Бюджет',
+    used_pct:p=>`Использовано ${p}% бюджета`,
+    over_by:s=>`⚠ Превышение на ${s}`,
+    near_warn:'Осталось меньше 15% бюджета',
+    no_budget:'Бюджет не задан. Укажите его в «Настройках».',
+    spent_plan:(s,p)=>`потрачено ${s} + план ${p}`,
+    without_cat:'Без категории',
+    no_receipts_short:'Чеков пока нет. Нажмите «+», чтобы добавить.',
+    no_receipts:'Чеков нет.', no_receipts2:'Нажмите «+», чтобы добавить.',
+    no_shop:'Список пуст.', no_shop2:'Добавьте, что ещё нужно купить.',
+    rec_count:(n,sum)=>`${n} ${plural(n,'чек','чека','чеков')} · на сумму ${sum}`,
+    rec_count_short:n=>`${n} ${plural(n,'чек','чека','чеков')}`,
+    today:'Сегодня', yesterday:'Вчера', no_date:'Без даты',
+    t_saved:'Сохранено', t_rec_added:'Чек добавлен', t_rec_upd:'Чек обновлён', t_rec_del:'Чек удалён',
+    t_added_list:'Добавлено в список', t_upd:'Обновлено', t_del:'Удалено', t_bought:'Отмечено куплено',
+    t_bought_fill:'Отмечено куплено — заполните чек', t_amount_set:'Сумма подставлена', t_photo_added:'Фото добавлено. Можно распознать сумму.',
+    t_need_amount:'Введите сумму', t_need_name:'Введите название', t_backup_saved:'Копия сохранена', t_csv:'CSV экспортирован',
+    t_wiped:'Данные очищены', t_no_photo:'Сначала добавьте фото',
+    ocr_recognizing:'Распознаю чек…', ocr_pick:'Выберите сумму (или введите вручную):',
+    ocr_fail:'Не удалось распознать (нужен интернет). Введите сумму вручную.', ocr_none:'Сумму не удалось распознать — введите вручную.',
+    confirm_wipe:'Удалить ВСЕ данные объекта у всех участников? Это необратимо.',
+    ob_title:'Учёт ремонта', ob_sub:'Создайте объект или войдите по коду',
+    ob_name:'Название объекта', ob_create_btn:'Создать объект', ob_have_code:'У меня есть код объекта',
+    ob_code:'Код объекта', ob_join_btn:'Войти', ob_new:'Создать новый объект',
+    ob_creating:'Создаю объект…', ob_joining:'Подключаюсь…',
+    ob_bad_code:'Объект с таким кодом не найден', ob_need_code:'Введите код',
+    sync_title:'Объект и доступ', sync_code_lbl:'Код объекта (дайте рабочим, чтобы вносили чеки):',
+    sync_share:'Поделиться', sync_name:'Ваше имя (кто вносит чеки)', sync_name_ph:'Напр. Гоча',
+    sync_leave:'Выйти из объекта', sync_left:'Вы вышли из объекта',
+    confirm_leave:'Выйти из объекта? Данные останутся в облаке, вы сможете вернуться по коду.',
+    code_copied:'Код скопирован', share_text:c=>`Код объекта для учёта ремонта: ${c}`,
+    cloud_err:'Нет связи с облаком — проверьте интернет'
+  },
+  en:{
+    header_sub:'Materials & labor · budget remaining',
+    tab_home:'Overview', tab_receipts:'Receipts', tab_shop:'To buy', tab_set:'Settings',
+    mat:'Materials', work:'Labor',
+    forecast_title:'Forecast incl. planned purchases', recent_title:'Recent receipts', all_receipts:'All receipts →',
+    kpi_spent:'Total spent', kpi_left:'Total remaining',
+    seg_all:'All', seg_todo:'To buy', seg_done:'Bought',
+    search_ph:'Search: store, category…',
+    shop_need:'Still to buy (not bought)', shop_add:'+ Item',
+    set_obj_title:'Project & budgets', set_name:'Project name', set_name_ph:'e.g. Apartment on Rustaveli',
+    set_cur:'Currency', set_bud_mat:'Budget: materials', set_bud_work:'Budget: labor', save:'Save',
+    set_data_title:'Data',
+    set_data_note:'Data is stored in the cloud and synced for everyone who has the project code. You can export a backup file.',
+    backup_btn:'Export backup (.json)', csv_btn:'Export receipts to Excel/CSV',
+    wipe_btn:'Erase all project data',
+    howto_title:'How to use',
+    howto_body:'Tap “+” to add a receipt. Photograph it — the amount is read automatically (double-check it). Workers add receipts from their own phones using the project code, and you see everything on the Overview instantly. In “To buy”, keep a plan of future purchases with budgets.',
+    howto_tip:'Tip: open this page on your phone and add it to the home screen (“Share” → “Add to Home Screen”) to use it like an app.',
+    rec_new:'New receipt', rec_edit:'Receipt',
+    photo_btn:'Receipt photo', ocr_btn:'Read amount',
+    f_amount:'Amount', f_date:'Date', f_cat:'Category', f_cat_ph:'e.g. Plumbing',
+    f_store:'Store / supplier', f_store_ph:'e.g. Domino, market…',
+    f_note:'Note (optional)', f_note_ph:'What was bought…',
+    save_receipt:'Save receipt', del_receipt:'Delete receipt', cancel:'Cancel',
+    shop_new:'To buy', shop_edit:'Item', shop_what:'What is needed', shop_what_ph:'e.g. Tile 60×60, 15 m²',
+    shop_amount:'Budget (max)', shop_buy:'Buy — enter amount', del:'Delete',
+    budget_max_short:'up to', plan_short:'plan', fact_short:'actual',
+    saved_word:'saved', over_word2:'over', on_budget:'on budget',
+    var_title:'Bought vs. planned budget:', var_saved:'saved', var_over:'overspent', var_net:'net',
+    budget_max_hint:p=>`Planned max budget: ${p}`,
+    confirm_unbuy:'Cancel this purchase? The linked receipt will be deleted too.',
+    t_unbought:'Purchase canceled',
+    left_word:'remaining', over_word:'over budget',
+    remains:'will remain', wont_fit:'not enough',
+    spent_lbl:'Spent', budget_lbl:'Budget',
+    used_pct:p=>`${p}% of budget used`,
+    over_by:s=>`⚠ Over budget by ${s}`,
+    near_warn:'Less than 15% of budget left',
+    no_budget:'No budget set. Set it in “Settings”.',
+    spent_plan:(s,p)=>`spent ${s} + planned ${p}`,
+    without_cat:'No category',
+    no_receipts_short:'No receipts yet. Tap “+” to add.',
+    no_receipts:'No receipts.', no_receipts2:'Tap “+” to add.',
+    no_shop:'The list is empty.', no_shop2:'Add what still needs buying.',
+    rec_count:(n,sum)=>`${n} ${n===1?'receipt':'receipts'} · total ${sum}`,
+    rec_count_short:n=>`${n} ${n===1?'receipt':'receipts'}`,
+    today:'Today', yesterday:'Yesterday', no_date:'No date',
+    t_saved:'Saved', t_rec_added:'Receipt added', t_rec_upd:'Receipt updated', t_rec_del:'Receipt deleted',
+    t_added_list:'Added to list', t_upd:'Updated', t_del:'Deleted', t_bought:'Marked as bought',
+    t_bought_fill:'Marked as bought — fill in the receipt', t_amount_set:'Amount filled in', t_photo_added:'Photo added. You can read the amount.',
+    t_need_amount:'Enter an amount', t_need_name:'Enter a name', t_backup_saved:'Backup saved', t_csv:'CSV exported',
+    t_wiped:'Data erased', t_no_photo:'Add a photo first',
+    ocr_recognizing:'Reading receipt…', ocr_pick:'Pick the amount (or type it):',
+    ocr_fail:'Could not read (internet needed). Enter the amount manually.', ocr_none:'Amount not recognized — enter it manually.',
+    confirm_wipe:'Erase ALL project data for everyone? This cannot be undone.',
+    ob_title:'Renovation budget', ob_sub:'Create a project or join with a code',
+    ob_name:'Project name', ob_create_btn:'Create project', ob_have_code:'I have a project code',
+    ob_code:'Project code', ob_join_btn:'Join', ob_new:'Create a new project',
+    ob_creating:'Creating…', ob_joining:'Connecting…',
+    ob_bad_code:'No project found with that code', ob_need_code:'Enter the code',
+    sync_title:'Project & access', sync_code_lbl:'Project code (give it to workers to add receipts):',
+    sync_share:'Share', sync_name:'Your name (who enters receipts)', sync_name_ph:'e.g. John',
+    sync_leave:'Leave project', sync_left:'Left the project',
+    confirm_leave:'Leave this project? Data stays in the cloud; you can rejoin with the code.',
+    code_copied:'Code copied', share_text:c=>`Renovation budget project code: ${c}`,
+    cloud_err:'No cloud connection — check the internet'
+  }
+};
+let lang='ru';
+function t(key,...a){const v=(T[lang]&&T[lang][key])!==undefined?T[lang][key]:(T.ru[key]);return typeof v==='function'?v(...a):v;}
+function applyLang(){
+  document.documentElement.lang=lang;
+  document.getElementById('langBtn').textContent=(lang==='ru'?'EN':'RU');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.setAttribute('placeholder',t(el.dataset.i18nPh));});
+}
+function toggleLang(){
+  lang=(lang==='ru'?'en':'ru'); lsSet('remont_lang',lang);
+  applyLang(); applyHeader(); fillCatSuggest(); refreshAll();
+}
+
+/* ============ Icons ============ */
+const ICON_PATHS={
+  home:'<path d="m3 9.2 9-6.6 9 6.6V20a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 20z"/><path d="M9.2 21.5V12h5.6v9.5"/>',
+  receipt:'<path d="M5 3h14v18l-2.5-1.6L14 21l-2-1.6L10 21l-2.5-1.6L5 21z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  cart:'<circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3.5h2.3l2.2 11.3a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2l1.4-7.1H5.5"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5v.2a2 2 0 0 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H2a2 2 0 0 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V8a1.6 1.6 0 0 0 1.5 1h.2a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>',
+  box:'<path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13.5" r="3.2"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  grid:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>'
+};
+function icon(name,size){size=size||20;return `<svg class="i" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name]||''}</svg>`;}
+function applyIcons(){document.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=icon(el.dataset.icon, parseInt(el.dataset.isize||'20',10));});}
+
+/* ============ State ============ */
+let settings={name:'',cur:'₾',budMat:0,budWork:0};
+let receipts=[], shopping=[];
+let projectCode=null, meName='';
+const DEFAULT_CATS_RU=['Черновые','Отделка','Сантехника','Электрика','Плитка','Двери','Крепёж','Инструмент','Малярка','Прочее'];
+const DEFAULT_CATS_EN=['Rough-in','Finishing','Plumbing','Electrical','Tiling','Doors','Fasteners','Tools','Painting','Other'];
+function defaultCats(){return lang==='en'?DEFAULT_CATS_EN:DEFAULT_CATS_RU;}
+let uid=()=> (Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+
+/* ============ Cloud data layer (Firestore) ============ */
+function projRef(){return fs.collection('projects').doc(projectCode);}
+function clean(val){const o={};Object.keys(val).forEach(k=>{if(val[k]!==undefined)o[k]=val[k];});return o;}
+async function cloudPut(store,val){
+  if(store==='settings'){
+    await projRef().set(clean({name:settings.name,cur:settings.cur,budMat:settings.budMat,budWork:settings.budWork}),{merge:true});
+    return;
+  }
+  await projRef().collection(store).doc(val.id).set(clean(val));
+}
+async function cloudDel(store,id){ await projRef().collection(store).doc(id).delete(); }
+async function cloudClear(store){
+  const qs=await projRef().collection(store).get();
+  const batch=fs.batch(); qs.forEach(d=>batch.delete(d.ref)); await batch.commit();
+}
+let unsubs=[];
+function detachListeners(){unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];}
+function attachListeners(){
+  detachListeners();
+  unsubs.push(projRef().onSnapshot(doc=>{
+    if(doc.exists){
+      const d=doc.data();
+      settings.name=d.name||''; settings.cur=d.cur||'₾';
+      settings.budMat=Number(d.budMat)||0; settings.budWork=Number(d.budWork)||0;
+      applyHeader(); renderHome();
+      const setCode=document.getElementById('setCode'); if(setCode)setCode.textContent=projectCode||'—';
+    }
+  },err=>console.warn('proj',err)));
+  unsubs.push(projRef().collection('receipts').onSnapshot(qs=>{
+    receipts=qs.docs.map(d=>Object.assign({id:d.id},d.data())); refreshAll();
+  },err=>console.warn('receipts',err)));
+  unsubs.push(projRef().collection('shopping').onSnapshot(qs=>{
+    shopping=qs.docs.map(d=>Object.assign({id:d.id},d.data())); refreshAll();
+  },err=>console.warn('shopping',err)));
+}
+
+/* ============ Project create / join / leave ============ */
+function genCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
+async function createProject(name){
+  let code=genCode();
+  await fs.collection('projects').doc(code).set({name:name||'',cur:'₾',budMat:0,budWork:0,createdAt:Date.now()});
+  setProject(code);
+}
+async function joinProject(code){
+  const doc=await fs.collection('projects').doc(code).get();
+  if(!doc.exists)return false;
+  setProject(code); return true;
+}
+function setProject(code){
+  projectCode=code; lsSet('remont_project',code);
+  hideOnboarding(); attachListeners(); go('home');
+}
+function leaveProject(){
+  detachListeners(); projectCode=null; lsDel('remont_project');
+  receipts=[]; shopping=[]; settings={name:'',cur:'₾',budMat:0,budWork:0};
+  showOnboarding();
+}
+function leaveProjectConfirm(){ if(!confirm(t('confirm_leave')))return; leaveProject(); toast(t('sync_left')); }
+
+/* onboarding ui */
+function showOnboarding(){ obShow('create'); document.getElementById('onboard').classList.add('show'); }
+function hideOnboarding(){ document.getElementById('onboard').classList.remove('show'); }
+function obShow(which){
+  document.getElementById('obCreate').style.display=which==='create'?'block':'none';
+  document.getElementById('obJoin').style.display=which==='join'?'block':'none';
+  const st=document.getElementById('obStatus'); st.textContent=''; st.className='ob-status mini';
+}
+function obStatus(msg,err){const st=document.getElementById('obStatus');st.textContent=msg;st.className='ob-status mini'+(err?' err':'');}
+async function obCreate(){
+  const name=document.getElementById('obName').value.trim();
+  obStatus(t('ob_creating'),false);
+  try{ await createProject(name); }catch(e){ obStatus(t('cloud_err'),true); }
+}
+async function obJoin(){
+  const code=document.getElementById('obCode').value.trim().toUpperCase();
+  if(!code){ obStatus(t('ob_need_code'),true); return; }
+  obStatus(t('ob_joining'),false);
+  try{ const ok=await joinProject(code); if(!ok)obStatus(t('ob_bad_code'),true); }
+  catch(e){ obStatus(t('cloud_err'),true); }
+}
+function shareCode(){
+  const code=projectCode||'';
+  if(navigator.share){ navigator.share({title:t('ob_title'),text:t('share_text',code)}).catch(()=>{}); }
+  else { try{ navigator.clipboard.writeText(code); toast(t('code_copied')); }catch(e){ toast(code); } }
+}
+function saveMeName(){ meName=document.getElementById('setMeName').value.trim(); lsSet('remont_name',meName); toast(t('t_saved')); }
+
+/* ============ Format ============ */
+function locale(){return lang==='en'?'en-US':'ru-RU';}
+function money(n){
+  n=Number(n)||0;
+  const s=n.toLocaleString(locale(),{minimumFractionDigits:(n%1?2:0),maximumFractionDigits:2});
+  return s+' '+settings.cur;
+}
+function shortDate(iso){ if(!iso)return ''; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString(locale(),{day:'2-digit',month:'short'}); }
+function fullDate(iso){
+  if(!iso||iso==='—') return t('no_date');
+  const d=new Date(iso+'T00:00:00');
+  const today=todayISO();
+  const y=new Date(); y.setDate(y.getDate()-1);
+  const yIso=new Date(y.getTime()-y.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const base=d.toLocaleDateString(locale(),{weekday:'short',day:'numeric',month:'long'});
+  if(iso===today) return t('today')+' · '+base;
+  if(iso===yIso) return t('yesterday')+' · '+base;
+  return base;
+}
+function todayISO(){const d=new Date();const o=d.getTimezoneOffset();const x=new Date(d.getTime()-o*60000);return x.toISOString().slice(0,10);}
+
+/* ============ Nav ============ */
+function go(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.getElementById('fab').style.display=(v==='home'||v==='receipts')?'block':'none';
+  window.scrollTo(0,0);
+  if(v==='home')renderHome();
+  if(v==='receipts')renderReceipts();
+  if(v==='shop')renderShop();
+  if(v==='set')fillSettings();
+}
+
+/* ============ Home ============ */
+function spentBy(type){return receipts.filter(r=>r.type===type).reduce((s,r)=>s+(Number(r.amount)||0),0);}
+function plannedBy(type){return shopping.filter(s=>s.type===type&&!s.done).reduce((s,r)=>s+(Number(r.amount)||0),0);}
+function budgetCard(type){
+  const isMat=type==='material';
+  const budget=isMat?settings.budMat:settings.budWork;
+  const spent=spentBy(type);
+  const left=budget-spent;
+  const pct=budget>0?Math.min(100,spent/budget*100):0;
+  const over=budget>0&&spent>budget;
+  const near=budget>0&&!over&&pct>=85;
+  let color=over?'var(--bad)':(near?'var(--warn)':'var(--ok)');
+  const cls=isMat?'mat':'work';
+  let hint='';
+  if(budget<=0){hint=`<div class="hint">${t('no_budget')}</div>`;}
+  else if(over){hint=`<div class="hint bad">${t('over_by',money(spent-budget))}</div>`;}
+  else if(near){hint=`<div class="hint warn">${t('near_warn')}</div>`;}
+  else {hint=`<div class="hint">${t('used_pct',Math.round(pct))}</div>`;}
+  return `
+    <span class="tag ${cls}">${icon(isMat?'box':'wrench',14)} ${t(isMat?'mat':'work')}</span>
+    <div class="bignum">${money(left<0?0:left)} <small>${left<0?t('over_word'):t('left_word')}</small></div>
+    <div class="bar"><i style="width:${pct}%;background:${color}"></i></div>
+    <div class="brow"><span>${t('spent_lbl')} <b>${money(spent)}</b></span><span>${t('budget_lbl')} <b>${money(budget)}</b></span></div>
+    ${hint}`;
+}
+function renderHome(){
+  document.getElementById('card-mat').innerHTML=budgetCard('material');
+  document.getElementById('card-work').innerHTML=budgetCard('work');
+  const totalSpent=spentBy('material')+spentBy('work');
+  const totalBud=(settings.budMat||0)+(settings.budWork||0);
+  document.getElementById('kpiSpent').textContent=money(totalSpent);
+  document.getElementById('kpiLeft').textContent=money(Math.max(0,totalBud-totalSpent));
+  const planMat=plannedBy('material'), planWork=plannedBy('work');
+  const fc=document.getElementById('forecastCard');
+  if(planMat+planWork>0){
+    fc.style.display='block';
+    const rows=[['material',t('mat'),settings.budMat,spentBy('material'),planMat],
+               ['work',t('work'),settings.budWork,spentBy('work'),planWork]];
+    document.getElementById('forecastBody').innerHTML=rows.map(([tp,lbl,bud,sp,pl])=>{
+      if(pl<=0&&bud<=0) return '';
+      const proj=sp+pl; const rest=bud-proj;
+      const bad=bud>0&&proj>bud;
+      return `<div class="row" style="margin-bottom:10px">
+        <div><b>${lbl}</b><div class="mini">${t('spent_plan',money(sp),money(pl))}</div></div>
+        <div style="text-align:right">
+          <div style="font-weight:800;color:${bad?'var(--bad)':'var(--ok)'}">${bad?'−'+money(proj-bud):money(rest)}</div>
+          <div class="mini">${bad?t('wont_fit'):t('remains')}</div>
+        </div></div>`;
+    }).join('')||'<div class="mini">—</div>';
+  } else fc.style.display='none';
+  const rl=document.getElementById('recentList');
+  const recent=[...receipts].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||((b.createdAt||0)-(a.createdAt||0))).slice(0,4);
+  rl.innerHTML=recent.length?recent.map(receiptRow).join(''):`<div class="empty" style="padding:20px"><div class="mini">${t('no_receipts_short')}</div></div>`;
+}
+
+/* ============ Receipts ============ */
+let recFilter='all';
+function receiptRow(r){
+  const cls=r.type==='material'?'mat':'work';
+  const pill=t(r.type==='material'?'mat':'work');
+  const thumb=r.photo?`<div class="thumb"><img src="${r.photo}"></div>`:`<div class="thumb ${cls}">${icon(r.type==='material'?'box':'wrench',22)}</div>`;
+  const line2=[shortDate(r.date),r.store,r.by].filter(Boolean).join(' · ');
+  return `<div class="item" onclick="openReceipt('${r.id}')">
+    ${thumb}
+    <div class="mid">
+      <div class="t1">${esc(r.cat||t('without_cat'))} <span class="pill ${cls}">${esc(pill)}</span></div>
+      <div class="t2">${esc(line2||'—')}</div>
+    </div>
+    <div class="amt">${money(r.amount)}</div>
+  </div>`;
+}
+function renderReceipts(){
+  const q=(document.getElementById('recSearch').value||'').toLowerCase().trim();
+  let list=[...receipts];
+  if(recFilter!=='all') list=list.filter(r=>r.type===recFilter);
+  if(q) list=list.filter(r=>((r.cat||'')+' '+(r.store||'')+' '+(r.note||'')+' '+(r.by||'')).toLowerCase().includes(q));
+  list.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||((b.createdAt||0)-(a.createdAt||0)));
+  const el=document.getElementById('receiptList');
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><div class="em">${icon('receipt',44)}</div>${t('no_receipts')}<br>${t('no_receipts2')}</div>`;
+  } else {
+    const groups={}, order=[];
+    list.forEach(r=>{const k=r.date||'—'; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(r);});
+    el.innerHTML=order.map(k=>{
+      const items=groups[k];
+      const daySum=items.reduce((s,r)=>s+(Number(r.amount)||0),0);
+      const cnt=t('rec_count_short',items.length);
+      return `<div class="daygroup">
+        <div class="dayhead"><div class="dl">${esc(fullDate(k))}<span class="dc">${cnt}</span></div><div class="dsum">${money(daySum)}</div></div>
+        ${items.map(receiptRow).join('')}
+      </div>`;
+    }).join('');
+  }
+  const sum=list.reduce((s,r)=>s+(Number(r.amount)||0),0);
+  document.getElementById('recTotals').textContent=t('rec_count',list.length,money(sum));
+}
+
+/* ============ Shopping ============ */
+let shopFilter='todo';
+function planVariance(){
+  let saved=0, over=0;
+  shopping.forEach(s=>{
+    if(s.done && s.actual!=null && Number(s.amount)>0){
+      const d=Number(s.amount)-Number(s.actual);
+      if(d>0)saved+=d; else over+=-d;
+    }
+  });
+  return {saved,over,net:saved-over};
+}
+function renderShop(){
+  let list=[...shopping];
+  if(shopFilter==='todo')list=list.filter(s=>!s.done);
+  else if(shopFilter==='done')list=list.filter(s=>s.done);
+  list.sort((a,b)=>((a.done?1:0)-(b.done?1:0))||((b.createdAt||0)-(a.createdAt||0)));
+  const el=document.getElementById('shopList');
+  el.innerHTML=list.length?list.map(shopRow).join(''):`<div class="empty"><div class="em">${icon('cart',44)}</div>${t('no_shop')}<br>${t('no_shop2')}</div>`;
+  document.getElementById('shopPlanned').textContent=money(plannedBy('material')+plannedBy('work'));
+  const v=planVariance();
+  const vd=document.getElementById('shopVariance');
+  if(v.saved>0||v.over>0){
+    vd.style.display='block';
+    const netColor=v.net>=0?'var(--ok)':'var(--bad)';
+    const netStr=(v.net>=0?'−':'+')+money(Math.abs(v.net));
+    vd.innerHTML=`<div class="divider"></div>
+      <div class="mini" style="margin-bottom:8px;font-weight:600">${t('var_title')}</div>
+      <div class="row" style="font-size:13px">
+        <span>${t('var_saved')}<br><b style="color:var(--ok);font-size:15px">${money(v.saved)}</b></span>
+        <span style="text-align:center">${t('var_over')}<br><b style="color:var(--bad);font-size:15px">${money(v.over)}</b></span>
+        <span style="text-align:right">${t('var_net')}<br><b style="color:${netColor};font-size:15px">${netStr}</b></span>
+      </div>`;
+  } else vd.style.display='none';
+}
+function shopRow(s){
+  const cls=s.type==='material'?'mat':'work';
+  const pill=t(s.type==='material'?'mat':'work');
+  const budget=Number(s.amount)||0;
+  if(s.done){
+    const actual=(s.actual!=null)?Number(s.actual):null;
+    let vChip='';
+    if(actual!=null&&budget>0){
+      const d=budget-actual;
+      if(d>0.009)vChip=` · <span style="color:var(--ok);font-weight:700">${t('saved_word')} ${money(d)}</span>`;
+      else if(d<-0.009)vChip=` · <span style="color:var(--bad);font-weight:700">${t('over_word2')} ${money(-d)}</span>`;
+      else vChip=` · <span style="color:var(--muted)">${t('on_budget')}</span>`;
+    }
+    const parts=[]; if(s.cat)parts.push(esc(s.cat)); if(budget)parts.push(`${t('plan_short')} ${money(budget)}`);
+    const t2=(parts.join(' · ')||'—')+vChip;
+    const rightAmt=(actual!=null)?money(actual):(budget?money(budget):'');
+    return `<div class="shop-item done">
+      <div class="chk done" onclick="toggleShop('${s.id}')">${icon('check',16)}</div>
+      <div class="mid" onclick="openShop('${s.id}')">
+        <div class="t1">${esc(s.name)} <span class="pill ${cls}">${esc(pill)}</span></div>
+        <div class="t2">${t2}</div>
+      </div>
+      <div class="amt" onclick="openShop('${s.id}')">${rightAmt}</div>
+    </div>`;
+  }
+  const parts=[]; if(s.cat)parts.push(esc(s.cat)); if(budget)parts.push(`${t('budget_max_short')} ${money(budget)}`);
+  return `<div class="shop-item">
+    <div class="chk" onclick="toggleShop('${s.id}')"></div>
+    <div class="mid" onclick="openShop('${s.id}')">
+      <div class="t1">${esc(s.name)} <span class="pill ${cls}">${esc(pill)}</span></div>
+      <div class="t2">${parts.join(' · ')||'—'}</div>
+    </div>
+    <div class="amt" onclick="openShop('${s.id}')">${budget?money(budget):''}</div>
+  </div>`;
+}
+async function toggleShop(id){
+  const s=shopping.find(x=>x.id===id); if(!s)return;
+  if(!s.done){ buyShop(id); return; }
+  if(!confirm(t('confirm_unbuy')))return;
+  if(s.receiptId){ await cloudDel('receipts',s.receiptId); }
+  s.done=false; s.actual=null; s.receiptId=null;
+  await cloudPut('shopping',s);
+  toast(t('t_unbought'));
+}
+let pendingShopLink=null;
+function buyShop(id){
+  const s=shopping.find(x=>x.id===id); if(!s)return;
+  openReceipt();
+  curType=s.type; setType('#recType',curType);
+  document.getElementById('recAmount').value=s.amount||'';
+  document.getElementById('recCat').value=s.cat||'';
+  document.getElementById('recStore').value='';
+  document.getElementById('recNote').value=s.name;
+  highlightChips();
+  const bh=document.getElementById('budgetHint');
+  if(Number(s.amount)>0){bh.style.display='block';bh.textContent=t('budget_max_hint',money(s.amount));}
+  pendingShopLink=id;
+}
+
+/* ============ Receipt sheet ============ */
+let editingRec=null, curPhoto=null, curType='material';
+function fillCatSuggest(){
+  const cats=Array.from(new Set([...defaultCats(), ...receipts.map(r=>r.cat).filter(Boolean)]));
+  document.getElementById('catlist').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
+  document.getElementById('catChips').innerHTML=defaultCats().slice(0,6).map(c=>`<button type="button" onclick="pickCat('${esc(c)}')">${esc(c)}</button>`).join('');
+}
+function pickCat(c){document.getElementById('recCat').value=c;highlightChips();}
+function highlightChips(){const v=document.getElementById('recCat').value;document.querySelectorAll('#catChips button').forEach(b=>b.classList.toggle('on',b.textContent===v));}
+function setType(sel,tp){curType=tp;document.querySelectorAll(sel+' button').forEach(b=>{b.classList.toggle('on',b.dataset.t===tp);});}
+function openReceipt(id){
+  editingRec=null; curPhoto=null; pendingShopLink=null;
+  document.getElementById('budgetHint').style.display='none';
+  fillCatSuggest();
+  document.getElementById('amountSuggest').innerHTML='';
+  document.getElementById('ocrStatus').textContent='';
+  document.getElementById('ocrBtn').style.display='none';
+  document.getElementById('ocrBtn').innerHTML=icon('search',16)+'<span>'+esc(t('ocr_btn'))+'</span>';
+  document.getElementById('photoPreview').innerHTML='';
+  if(typeof id==='string'){
+    const r=receipts.find(x=>x.id===id);
+    if(r){
+      editingRec=r; curType=r.type; curPhoto=r.photo||null;
+      document.getElementById('recTitle').textContent=t('rec_edit');
+      document.getElementById('recAmount').value=r.amount||'';
+      document.getElementById('recDate').value=r.date||todayISO();
+      document.getElementById('recCat').value=r.cat||'';
+      document.getElementById('recStore').value=r.store||'';
+      document.getElementById('recNote').value=r.note||'';
+      if(curPhoto){document.getElementById('photoPreview').innerHTML=`<img src="${curPhoto}">`;document.getElementById('ocrBtn').style.display='inline-flex';}
+      document.getElementById('recDelBtn').style.display='block';
+    }
+  } else {
+    curType='material';
+    document.getElementById('recTitle').textContent=t('rec_new');
+    document.getElementById('recAmount').value='';
+    document.getElementById('recDate').value=todayISO();
+    document.getElementById('recCat').value='';
+    document.getElementById('recStore').value='';
+    document.getElementById('recNote').value='';
+    document.getElementById('recDelBtn').style.display='none';
+  }
+  setType('#recType',curType);
+  highlightChips();
+  openSheet('sheetReceipt');
+}
+document.getElementById('recType').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setType('#recType',b.dataset.t);});
+document.getElementById('recCat').addEventListener('input',highlightChips);
+async function saveReceipt(){
+  const amount=parseFloat(document.getElementById('recAmount').value);
+  if(!(amount>0)){toast(t('t_need_amount'));return;}
+  const rec=editingRec?Object.assign({},editingRec):{id:uid(),createdAt:Date.now(),by:meName||''};
+  rec.type=curType;
+  rec.amount=amount;
+  rec.date=document.getElementById('recDate').value||todayISO();
+  rec.cat=document.getElementById('recCat').value.trim();
+  rec.store=document.getElementById('recStore').value.trim();
+  rec.note=document.getElementById('recNote').value.trim();
+  rec.photo=curPhoto||null;
+  const wasEdit=!!editingRec;
+  await cloudPut('receipts',rec);
+  if(pendingShopLink){
+    const sp=shopping.find(x=>x.id===pendingShopLink);
+    if(sp){sp.done=true;sp.actual=rec.amount;sp.receiptId=rec.id;await cloudPut('shopping',sp);}
+    pendingShopLink=null;
+  } else {
+    const linkedSp=shopping.find(x=>x.receiptId===rec.id);
+    if(linkedSp && linkedSp.actual!==rec.amount){linkedSp.actual=rec.amount;await cloudPut('shopping',linkedSp);}
+  }
+  document.getElementById('budgetHint').style.display='none';
+  closeSheet('sheetReceipt');
+  toast(wasEdit?t('t_rec_upd'):t('t_rec_added'));
+}
+async function deleteReceipt(){
+  if(!editingRec)return;
+  const sp=shopping.find(x=>x.receiptId===editingRec.id);
+  if(sp){sp.done=false;sp.actual=null;sp.receiptId=null;await cloudPut('shopping',sp);}
+  await cloudDel('receipts',editingRec.id);
+  closeSheet('sheetReceipt');toast(t('t_rec_del'));
+}
+
+/* ============ Photo + OCR (Google Vision) ============ */
+function onPhoto(e){
+  const file=e.target.files[0]; if(!file)return;
+  compressImage(file,1100,0.6).then(dataUrl=>{
+    curPhoto=dataUrl;
+    document.getElementById('photoPreview').innerHTML=`<img src="${dataUrl}">`;
+    document.getElementById('ocrBtn').style.display='inline-flex';
+    document.getElementById('ocrStatus').textContent=t('t_photo_added');
+  });
+}
+function compressImage(file,maxDim,quality){
+  return new Promise(res=>{
+    const img=new Image();
+    const reader=new FileReader();
+    reader.onload=()=>{img.src=reader.result;};
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(Math.max(w,h)>maxDim){const k=maxDim/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k);}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      res(c.toDataURL('image/jpeg',quality));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function runOCR(){
+  if(!curPhoto){toast(t('t_no_photo'));return;}
+  const st=document.getElementById('ocrStatus');
+  st.textContent=t('ocr_recognizing');
+  try{
+    const b64=curPhoto.split(',')[1];
+    const resp=await fetch('/api/vision',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:b64})
+    });
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok||data.error){ st.textContent=t('ocr_fail'); return; }
+    const text=data.text||'';
+    const cands=extractAmounts(text);
+    if(cands.length){
+      st.textContent=t('ocr_pick');
+      document.getElementById('amountSuggest').innerHTML=cands.map(v=>`<button type="button" onclick="pickAmount(${v})">${money(v)}</button>`).join('');
+      if(!document.getElementById('recAmount').value)document.getElementById('recAmount').value=cands[0];
+    } else { st.textContent=t('ocr_none'); }
+  }catch(err){ st.textContent=t('ocr_fail'); }
+}
+function pickAmount(v){document.getElementById('recAmount').value=v;toast(t('t_amount_set'));}
+const TOTAL_KW=/(სულ|ჯამი|გადასახდელი|თანხა|ჯამური|итог|итого|всего|сумма|к оплате|total|amount due|amount|balance|to pay|grand total)/i;
+function parseNum(raw){
+  let norm=String(raw).replace(/\s/g,'');
+  if(/[.,]\d{2}$/.test(norm)){ norm=norm.replace(/[.,](?=\d{3})/g,'').replace(',', '.'); }
+  else { norm=norm.replace(/[.,]/g,''); }
+  const v=parseFloat(norm);
+  return (v>=1 && v<10000000)?v:null;
+}
+function extractAmounts(text){
+  const numRe=/\d{1,3}(?:[ .,]\d{3})*(?:[.,]\d{2})?|\d+[.,]\d{2}|\d+/g;
+  const priority=[], all=[];
+  text.split(/\n+/).forEach(line=>{
+    const hasKw=TOTAL_KW.test(line);
+    const found=line.match(numRe)||[];
+    found.forEach(raw=>{ const v=parseNum(raw); if(v==null)return; all.push(v); if(hasKw)priority.push(v); });
+  });
+  return [...new Set([...priority.sort((a,b)=>b-a), ...all.sort((a,b)=>b-a)])].slice(0,6);
+}
+
+/* ============ Shopping sheet ============ */
+let editingShop=null;
+function openShop(id){
+  editingShop=null;
+  document.getElementById('catlist').innerHTML=Array.from(new Set([...defaultCats(),...receipts.map(r=>r.cat).filter(Boolean)])).map(c=>`<option value="${esc(c)}">`).join('');
+  if(typeof id==='string'){
+    const s=shopping.find(x=>x.id===id);
+    if(s){
+      editingShop=s;curType=s.type;
+      document.getElementById('shopTitle').textContent=t('shop_edit');
+      document.getElementById('shopName').value=s.name||'';
+      document.getElementById('shopCat').value=s.cat||'';
+      document.getElementById('shopAmount').value=s.amount||'';
+      document.getElementById('shopBuyBtn').style.display=s.done?'none':'block';
+      document.getElementById('shopDelBtn').style.display='block';
+    }
+  } else {
+    curType='material';
+    document.getElementById('shopTitle').textContent=t('shop_new');
+    document.getElementById('shopName').value='';
+    document.getElementById('shopCat').value='';
+    document.getElementById('shopAmount').value='';
+    document.getElementById('shopBuyBtn').style.display='none';
+    document.getElementById('shopDelBtn').style.display='none';
+  }
+  setType('#shopType',curType);
+  openSheet('sheetShop');
+}
+document.getElementById('shopType').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setType('#shopType',b.dataset.t);});
+async function saveShop(){
+  const name=document.getElementById('shopName').value.trim();
+  if(!name){toast(t('t_need_name'));return;}
+  const s=editingShop?Object.assign({},editingShop):{id:uid(),createdAt:Date.now(),done:false};
+  s.type=curType;
+  s.name=name;
+  s.cat=document.getElementById('shopCat').value.trim();
+  s.amount=parseFloat(document.getElementById('shopAmount').value)||0;
+  const wasEdit=!!editingShop;
+  await cloudPut('shopping',s);
+  closeSheet('sheetShop');toast(wasEdit?t('t_upd'):t('t_added_list'));
+}
+async function deleteShop(){
+  if(!editingShop)return;
+  await cloudDel('shopping',editingShop.id);
+  closeSheet('sheetShop');toast(t('t_del'));
+}
+function shopToReceipt(){
+  if(!editingShop)return;
+  const id=editingShop.id;
+  closeSheet('sheetShop');
+  buyShop(id);
+}
+
+/* ============ Settings ============ */
+function fillSettings(){
+  document.getElementById('setName').value=settings.name||'';
+  document.getElementById('setCur').value=settings.cur;
+  document.getElementById('setBudMat').value=settings.budMat||'';
+  document.getElementById('setBudWork').value=settings.budWork||'';
+  document.getElementById('setCode').textContent=projectCode||'—';
+  document.getElementById('setMeName').value=meName||'';
+}
+async function saveSettings(){
+  settings.name=document.getElementById('setName').value.trim();
+  settings.cur=document.getElementById('setCur').value;
+  settings.budMat=parseFloat(document.getElementById('setBudMat').value)||0;
+  settings.budWork=parseFloat(document.getElementById('setBudWork').value)||0;
+  await cloudPut('settings',settings);
+  applyHeader();toast(t('t_saved'));go('home');
+}
+function applyHeader(){
+  document.getElementById('objName').textContent=settings.name || (lang==='en'?'Renovation budget':'Учёт ремонта');
+}
+
+/* ============ Export ============ */
+function exportJSON(){
+  const data={version:2,exportedAt:new Date().toISOString(),code:projectCode,settings,receipts,shopping};
+  downloadFile(JSON.stringify(data,null,2),'application/json',`remont-backup-${todayISO()}.json`);
+  toast(t('t_backup_saved'));
+}
+function exportCSV(){
+  const head=lang==='en'?['Date','Type','Category','Store','Amount','By','Note']:['Дата','Тип','Категория','Магазин','Сумма','Кто','Комментарий'];
+  const rows=[head];
+  const tp={material:t('mat'),work:t('work')};
+  [...receipts].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(r=>{
+    rows.push([r.date||'',tp[r.type]||r.type,r.cat||'',r.store||'',String(r.amount||0).replace('.',','),r.by||'',(r.note||'').replace(/[\n\r]+/g,' ')]);
+  });
+  const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  downloadFile(csv,'text/csv',`remont-cheki-${todayISO()}.csv`);
+  toast(t('t_csv'));
+}
+function downloadFile(content,type,name){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+}
+async function wipe(){
+  if(!confirm(t('confirm_wipe')))return;
+  await cloudClear('receipts');await cloudClear('shopping');
+  toast(t('t_wiped'));
+}
+
+/* ============ Utils ============ */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function plural(n,one,few,many){n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return many;if(n1>1&&n1<5)return few;if(n1===1)return one;return many;}
+let toastT=null;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),1900);}
+function openSheet(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeSheet(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)closeSheet(bg.id);}));
+document.getElementById('recSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;recFilter=b.dataset.f;document.querySelectorAll('#recSeg button').forEach(x=>x.classList.toggle('on',x===b));renderReceipts();});
+document.getElementById('shopSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;shopFilter=b.dataset.f;document.querySelectorAll('#shopSeg button').forEach(x=>x.classList.toggle('on',x===b));renderShop();});
+function refreshAll(){renderHome();renderReceipts();renderShop();}
+
+/* ============ Init ============ */
+function init(){
+  lang=lsGet('remont_lang')||'ru';
+  meName=lsGet('remont_name')||'';
+  applyLang(); applyIcons(); applyHeader(); renderHome();
+  const saved=lsGet('remont_project');
+  if(saved && fs){ projectCode=saved; attachListeners(); }
+  else { showOnboarding(); }
+}
+init();
+</script>
+</body>
+</html>
