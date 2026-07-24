@@ -136,6 +136,13 @@
   .ocr-status{font-size:12.5px;color:var(--muted);margin-top:6px}
   .amount-suggest{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center}
   .amount-suggest button{border:1px solid var(--brand);color:var(--brand);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  #itemsBox{border:1px solid var(--line);border-radius:12px;padding:10px}
+  .item-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .item-row .inp{padding:9px 10px;font-size:15px}
+  .item-row .iname{flex:1;min-width:0}
+  .item-row .iprice{width:92px;text-align:right}
+  .item-row .idel{flex:0 0 auto;width:32px;height:38px;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;font-family:inherit}
+  .items-sum{display:flex;justify-content:space-between;font-weight:800;font-size:15px;padding:8px 2px 0;border-top:1px solid var(--line);margin-top:4px}
 
   .divider{height:1px;background:var(--line);margin:14px 0}
   .danger{color:var(--bad)}
@@ -326,6 +333,13 @@
       <div class="amount-suggest" id="amountSuggest"></div>
     </div>
 
+    <div id="itemsBox" style="display:none;margin-bottom:12px">
+      <div class="mini" style="font-weight:700;margin-bottom:8px" data-i18n="items_title"></div>
+      <div id="itemsList"></div>
+      <button class="btn sm" type="button" onclick="addItemRow()" data-i18n="add_item"></button>
+      <div class="items-sum"><span data-i18n="items_sum"></span><span id="itemsSum">0</span></div>
+    </div>
+
     <div class="two">
       <label class="fld"><span data-i18n="f_amount"></span>
         <input class="inp" id="recAmount" type="number" inputmode="decimal" placeholder="0"></label>
@@ -421,7 +435,11 @@ const T={
     howto_body:'Нажмите «+», чтобы добавить чек. Сфотографируйте чек — сумма распознаётся автоматически (проверьте её). Рабочие вносят чеки со своих телефонов по коду объекта, а вы сразу видите всё на «Обзоре». В «Закупках» ведите план будущих покупок с бюджетом.',
     howto_tip:'Совет: откройте страницу на телефоне и добавьте на главный экран («Поделиться» → «На экран Домой»), чтобы открывать как приложение.',
     rec_new:'Новый чек', rec_edit:'Чек',
-    photo_btn:'Фото чека', ocr_btn:'Распознать сумму',
+    photo_btn:'Фото чека', ocr_btn:'Распознать чек',
+    items_title:'Позиции чека', item_name_ph:'Товар', add_item:'+ позиция', items_sum:'Итого',
+    scan_ok:n=>n>0?`Распознано позиций: ${n} — проверьте и сохраните`:'Сумма распознана — проверьте',
+    scan_none:'Позиции не распознались — введите вручную',
+    items_count:n=>`${n} ${plural(n,'позиция','позиции','позиций')}`,
     f_amount:'Сумма', f_date:'Дата', f_cat:'Категория', f_cat_ph:'Напр. Сантехника',
     f_store:'Магазин / поставщик', f_store_ph:'Напр. Domino, рынок…',
     f_note:'Комментарий (необязательно)', f_note_ph:'Что купили…',
@@ -488,7 +506,11 @@ const T={
     howto_body:'Tap “+” to add a receipt. Photograph it — the amount is read automatically (double-check it). Workers add receipts from their own phones using the project code, and you see everything on the Overview instantly. In “To buy”, keep a plan of future purchases with budgets.',
     howto_tip:'Tip: open this page on your phone and add it to the home screen (“Share” → “Add to Home Screen”) to use it like an app.',
     rec_new:'New receipt', rec_edit:'Receipt',
-    photo_btn:'Receipt photo', ocr_btn:'Read amount',
+    photo_btn:'Receipt photo', ocr_btn:'Scan receipt',
+    items_title:'Receipt items', item_name_ph:'Item', add_item:'+ item', items_sum:'Total',
+    scan_ok:n=>n>0?`${n} items found — check and save`:'Amount recognized — check',
+    scan_none:'No items recognized — enter manually',
+    items_count:n=>`${n} ${n===1?'item':'items'}`,
     f_amount:'Amount', f_date:'Date', f_cat:'Category', f_cat_ph:'e.g. Plumbing',
     f_store:'Store / supplier', f_store_ph:'e.g. Domino, market…',
     f_note:'Note (optional)', f_note_ph:'What was bought…',
@@ -761,7 +783,7 @@ function receiptRow(r){
   const cls=r.type==='material'?'mat':'work';
   const pill=t(r.type==='material'?'mat':'work');
   const thumb=r.photo?`<div class="thumb"><img src="${r.photo}"></div>`:`<div class="thumb ${cls}">${icon(r.type==='material'?'box':'wrench',22)}</div>`;
-  const line2=[shortDate(r.date),r.store,r.by].filter(Boolean).join(' · ');
+  const line2=[shortDate(r.date),r.store,(r.items&&r.items.length?t('items_count',r.items.length):''),r.by].filter(Boolean).join(' · ');
   return `<div class="item" onclick="openReceipt('${r.id}')">
     ${thumb}
     <div class="mid">
@@ -892,7 +914,25 @@ function buyShop(id){
 }
 
 /* ============ Receipt sheet ============ */
-let editingRec=null, curPhoto=null, curType='material';
+let editingRec=null, curPhoto=null, curType='material', curItems=[];
+function renderItems(){
+  const list=document.getElementById('itemsList');
+  list.innerHTML=curItems.map((it,i)=>`<div class="item-row">
+    <input class="inp iname" placeholder="${esc(t('item_name_ph'))}" value="${esc(it.name||'')}" oninput="editItem(${i},'name',this.value)">
+    <input class="inp iprice" type="number" inputmode="decimal" placeholder="0" value="${it.price!=null?it.price:''}" oninput="editItem(${i},'price',this.value)">
+    <button type="button" class="idel" onclick="delItemRow(${i})">×</button>
+  </div>`).join('');
+  syncItemsSum();
+  document.getElementById('itemsBox').style.display=curItems.length?'block':'none';
+}
+function syncItemsSum(){
+  const sum=curItems.reduce((s,it)=>s+(Number(it.price)||0),0);
+  document.getElementById('itemsSum').textContent=money(sum);
+  if(curItems.length) document.getElementById('recAmount').value=Number(sum.toFixed(2));
+}
+function editItem(i,field,val){ if(!curItems[i])return; curItems[i][field]=(field==='price')?(parseFloat(val)||0):val; if(field==='price')syncItemsSum(); }
+function addItemRow(){ curItems.push({name:'',qty:1,price:0}); renderItems(); }
+function delItemRow(i){ curItems.splice(i,1); renderItems(); }
 function fillCatSuggest(){
   const cats=Array.from(new Set([...defaultCats(), ...receipts.map(r=>r.cat).filter(Boolean)]));
   document.getElementById('catlist').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
@@ -902,7 +942,7 @@ function pickCat(c){document.getElementById('recCat').value=c;highlightChips();}
 function highlightChips(){const v=document.getElementById('recCat').value;document.querySelectorAll('#catChips button').forEach(b=>b.classList.toggle('on',b.textContent===v));}
 function setType(sel,tp){curType=tp;document.querySelectorAll(sel+' button').forEach(b=>{b.classList.toggle('on',b.dataset.t===tp);});}
 function openReceipt(id){
-  editingRec=null; curPhoto=null; pendingShopLink=null;
+  editingRec=null; curPhoto=null; pendingShopLink=null; curItems=[];
   document.getElementById('budgetHint').style.display='none';
   fillCatSuggest();
   document.getElementById('amountSuggest').innerHTML='';
@@ -920,6 +960,7 @@ function openReceipt(id){
       document.getElementById('recCat').value=r.cat||'';
       document.getElementById('recStore').value=r.store||'';
       document.getElementById('recNote').value=r.note||'';
+      curItems=Array.isArray(r.items)?r.items.map(x=>({name:x.name,qty:x.qty||1,price:x.price})):[];
       if(curPhoto){document.getElementById('photoPreview').innerHTML=`<img src="${curPhoto}">`;document.getElementById('ocrBtn').style.display='inline-flex';}
       document.getElementById('recDelBtn').style.display='block';
     }
@@ -935,6 +976,7 @@ function openReceipt(id){
   }
   setType('#recType',curType);
   highlightChips();
+  renderItems();
   openSheet('sheetReceipt');
 }
 document.getElementById('recType').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setType('#recType',b.dataset.t);});
@@ -950,6 +992,8 @@ async function saveReceipt(){
   rec.store=document.getElementById('recStore').value.trim();
   rec.note=document.getElementById('recNote').value.trim();
   rec.photo=curPhoto||null;
+  rec.items=curItems.filter(it=>(it.name&&String(it.name).trim())||Number(it.price)>0).map(it=>({name:(it.name||'').trim(),qty:Number(it.qty)||1,price:Number(it.price)||0}));
+  if(rec.items.length){ rec.amount=Number(rec.items.reduce((s,it)=>s+it.price,0).toFixed(2)); }
   const wasEdit=!!editingRec;
   await cloudPut('receipts',rec);
   if(pendingShopLink){
@@ -1000,7 +1044,8 @@ function compressImage(file,maxDim,quality){
 async function runOCR(){
   if(!curPhoto){toast(t('t_no_photo'));return;}
   const st=document.getElementById('ocrStatus');
-  st.textContent=t('ocr_recognizing');
+  const btn=document.getElementById('ocrBtn');
+  st.textContent=t('ocr_recognizing'); btn.disabled=true;
   try{
     const b64=curPhoto.split(',')[1];
     const resp=await fetch('/api/vision',{
@@ -1009,14 +1054,19 @@ async function runOCR(){
     });
     const data=await resp.json().catch(()=>({}));
     if(!resp.ok||data.error){ st.textContent=t('ocr_fail'); return; }
-    const text=data.text||'';
-    const cands=extractAmounts(text);
-    if(cands.length){
-      st.textContent=t('ocr_pick');
-      document.getElementById('amountSuggest').innerHTML=cands.map(v=>`<button type="button" onclick="pickAmount(${v})">${money(v)}</button>`).join('');
-      if(!document.getElementById('recAmount').value)document.getElementById('recAmount').value=cands[0];
-    } else { st.textContent=t('ocr_none'); }
+    const items=Array.isArray(data.items)?data.items:[];
+    if(items.length){
+      curItems=items.map(it=>({name:String(it.name||''),qty:Number(it.qty)||1,price:Number(it.price)||0}));
+      renderItems();
+      if(data.store && !document.getElementById('recStore').value.trim()) document.getElementById('recStore').value=data.store;
+      if(data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) document.getElementById('recDate').value=data.date;
+      st.textContent=t('scan_ok',items.length);
+    } else if(Number(data.total)>0){
+      document.getElementById('recAmount').value=Number(data.total);
+      st.textContent=t('scan_ok',0);
+    } else { st.textContent=t('scan_none'); }
   }catch(err){ st.textContent=t('ocr_fail'); }
+  finally{ btn.disabled=false; }
 }
 function pickAmount(v){document.getElementById('recAmount').value=v;toast(t('t_amount_set'));}
 const TOTAL_KW=/(სულ|ჯამი|გადასახდელი|თანხა|ჯამური|итог|итого|всего|сумма|к оплате|total|amount due|amount|balance|to pay|grand total)/i;
