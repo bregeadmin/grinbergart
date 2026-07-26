@@ -234,6 +234,25 @@
       <div id="shopList"></div>
     </section>
 
+    <!-- ADVANCES (подотчёт) -->
+    <section class="view" id="v-adv">
+      <div class="card">
+        <div class="row" style="align-items:flex-start">
+          <div>
+            <div class="mini" data-i18n="adv_onhand_lbl"></div>
+            <div class="val" id="advOnHand" style="font-size:24px;font-weight:800">—</div>
+          </div>
+          <button class="btn primary sm" data-i18n="adv_give" onclick="openAdv()"></button>
+        </div>
+        <div class="row" style="margin-top:12px;font-size:13px">
+          <span><span class="mini" data-i18n="adv_given"></span><br><b id="advGivenTot">—</b></span>
+          <span style="text-align:right"><span class="mini" data-i18n="adv_spent"></span><br><b id="advSpentTot">—</b></span>
+        </div>
+        <div class="hint" data-i18n="adv_note" style="margin-top:10px"></div>
+      </div>
+      <div id="advList"></div>
+    </section>
+
     <!-- SETTINGS -->
     <section class="view" id="v-set">
       <div class="card">
@@ -288,6 +307,7 @@
     <button data-v="home" class="on" onclick="go('home')"><span class="ic" data-icon="home" data-isize="23"></span><span data-i18n="tab_home"></span></button>
     <button data-v="receipts" onclick="go('receipts')"><span class="ic" data-icon="receipt" data-isize="23"></span><span data-i18n="tab_receipts"></span></button>
     <button data-v="shop" onclick="go('shop')"><span class="ic" data-icon="cart" data-isize="23"></span><span data-i18n="tab_shop"></span></button>
+    <button data-v="adv" onclick="go('adv')"><span class="ic" data-icon="wallet" data-isize="23"></span><span data-i18n="tab_adv"></span></button>
     <button data-v="set" onclick="go('set')"><span class="ic" data-icon="settings" data-isize="23"></span><span data-i18n="tab_set"></span></button>
   </nav>
 </div>
@@ -354,6 +374,8 @@
     </label>
     <label class="fld"><span data-i18n="f_store"></span>
       <input class="inp" id="recStore" data-i18n-ph="f_store_ph"></label>
+    <label class="fld"><span data-i18n="f_by"></span>
+      <input class="inp" id="recBy" list="personlist" data-i18n-ph="f_by_ph"></label>
     <label class="fld"><span data-i18n="f_note"></span>
       <textarea class="inp" id="recNote" data-i18n-ph="f_note_ph"></textarea></label>
 
@@ -384,6 +406,28 @@
     <button class="btn block primary" id="shopBuyBtn" style="display:none;margin-top:10px" onclick="shopToReceipt()"><span data-icon="check" data-isize="18"></span><span data-i18n="shop_buy"></span></button>
     <button class="btn block danger" id="shopDelBtn" data-i18n="del" style="display:none;margin-top:10px" onclick="deleteShop()"></button>
     <button class="btn ghost block" data-i18n="cancel" style="margin-top:6px" onclick="closeSheet('sheetShop')"></button>
+  </div>
+</div>
+
+<!-- SHEET: advance (выдать деньги) -->
+<div class="sheet-bg" id="sheetAdv">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3 id="advTitle"></h3>
+    <label class="fld"><span data-i18n="adv_person"></span>
+      <input class="inp" id="advPerson" list="personlist" data-i18n-ph="adv_person_ph">
+      <datalist id="personlist"></datalist></label>
+    <div class="two">
+      <label class="fld"><span data-i18n="adv_amount"></span>
+        <input class="inp" id="advAmount" type="number" inputmode="decimal" placeholder="0"></label>
+      <label class="fld"><span data-i18n="f_date"></span>
+        <input class="inp" id="advDate" type="date"></label>
+    </div>
+    <label class="fld"><span data-i18n="adv_note_f"></span>
+      <input class="inp" id="advNote" data-i18n-ph="adv_note_ph"></label>
+    <button class="btn primary block" data-i18n="adv_give_btn" onclick="saveAdv()"></button>
+    <button class="btn block danger" id="advDelBtn" data-i18n="del" style="display:none;margin-top:10px" onclick="deleteAdv()"></button>
+    <button class="btn ghost block" data-i18n="cancel" style="margin-top:6px" onclick="closeSheet('sheetAdv')"></button>
   </div>
 </div>
 
@@ -442,7 +486,19 @@ const T={
     items_count:n=>`${n} ${plural(n,'позиция','позиции','позиций')}`,
     f_amount:'Сумма', f_date:'Дата', f_cat:'Категория', f_cat_ph:'Напр. Сантехника',
     f_store:'Магазин / поставщик', f_store_ph:'Напр. Domino, рынок…',
+    f_by:'Кто купил (подотчёт)', f_by_ph:'Напр. Валентин',
     f_note:'Комментарий (необязательно)', f_note_ph:'Что купили…',
+    tab_adv:'Подотчёт',
+    adv_onhand_lbl:'На руках у рабочих', adv_give:'+ Выдать', adv_give_btn:'Выдать деньги',
+    adv_given:'Выдано всего', adv_spent:'Потрачено по чекам',
+    adv_note:'Подотчётные — это наличные, выданные рабочим под покупку материалов. Бюджет уменьшают только чеки, а «на руках» — это кэш, который ещё не потрачен.',
+    adv_title_new:'Выдать деньги', adv_title_edit:'Выдача',
+    adv_person:'Кому', adv_person_ph:'Напр. Валентин', adv_amount:'Сумма', adv_note_f:'Комментарий', adv_note_ph:'Напр. на плитку',
+    adv_left:'на руках', adv_over:'перерасход', adv_of:'из',
+    adv_no:'Пока никому не выдавали.', adv_no2:'Нажмите «Выдать», чтобы записать выдачу.',
+    adv_hist:'Выдачи', adv_person_receipts:'Потрачено по чекам',
+    t_adv_given:'Выдача записана', t_adv_del:'Выдача удалена', adv_need:'Укажите имя и сумму',
+    confirm_adv_del:'Удалить эту выдачу?',
     save_receipt:'Сохранить чек', del_receipt:'Удалить чек', cancel:'Отмена',
     shop_new:'Что купить', shop_edit:'Позиция', shop_what:'Что нужно', shop_what_ph:'Напр. Плитка 60×60, 15 м²',
     shop_amount:'Бюджет (макс.)', shop_buy:'Купить — внести сумму', del:'Удалить',
@@ -513,7 +569,19 @@ const T={
     items_count:n=>`${n} ${n===1?'item':'items'}`,
     f_amount:'Amount', f_date:'Date', f_cat:'Category', f_cat_ph:'e.g. Plumbing',
     f_store:'Store / supplier', f_store_ph:'e.g. Domino, market…',
+    f_by:'Who bought (advance)', f_by_ph:'e.g. Valentin',
     f_note:'Note (optional)', f_note_ph:'What was bought…',
+    tab_adv:'Advances',
+    adv_onhand_lbl:'Cash held by workers', adv_give:'+ Give', adv_give_btn:'Give money',
+    adv_given:'Total given', adv_spent:'Spent (receipts)',
+    adv_note:'Advances are cash given to workers to buy materials. Only receipts reduce the budget; “on hand” is cash not yet spent.',
+    adv_title_new:'Give money', adv_title_edit:'Advance',
+    adv_person:'To whom', adv_person_ph:'e.g. Valentin', adv_amount:'Amount', adv_note_f:'Note', adv_note_ph:'e.g. for tiles',
+    adv_left:'on hand', adv_over:'overspent', adv_of:'of',
+    adv_no:'No advances given yet.', adv_no2:'Tap “Give” to record one.',
+    adv_hist:'Advances', adv_person_receipts:'Spent on receipts',
+    t_adv_given:'Advance recorded', t_adv_del:'Advance deleted', adv_need:'Enter a name and amount',
+    confirm_adv_del:'Delete this advance?',
     save_receipt:'Save receipt', del_receipt:'Delete receipt', cancel:'Cancel',
     shop_new:'To buy', shop_edit:'Item', shop_what:'What is needed', shop_what_ph:'e.g. Tile 60×60, 15 m²',
     shop_amount:'Budget (max)', shop_buy:'Buy — enter amount', del:'Delete',
@@ -587,14 +655,16 @@ const ICON_PATHS={
   trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
-  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>'
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+  wallet:'<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/><path d="M21 12a2 2 0 0 0-2-2h-4a2 2 0 0 0 0 4h4a2 2 0 0 0 2-2z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
 };
 function icon(name,size){size=size||20;return `<svg class="i" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name]||''}</svg>`;}
 function applyIcons(){document.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=icon(el.dataset.icon, parseInt(el.dataset.isize||'20',10));});}
 
 /* ============ State ============ */
 let settings={name:'',cur:'₾',budMat:0,budWork:0};
-let receipts=[], shopping=[];
+let receipts=[], shopping=[], advances=[];
 let projectCode=null, meName='';
 const DEFAULT_CATS_RU=['Черновые','Отделка','Сантехника','Электрика','Плитка','Двери','Крепёж','Инструмент','Малярка','Прочее'];
 const DEFAULT_CATS_EN=['Rough-in','Finishing','Plumbing','Electrical','Tiling','Doors','Fasteners','Tools','Painting','Other'];
@@ -635,6 +705,9 @@ function attachListeners(){
   unsubs.push(projRef().collection('shopping').onSnapshot(qs=>{
     shopping=qs.docs.map(d=>Object.assign({id:d.id},d.data())); refreshAll();
   },err=>console.warn('shopping',err)));
+  unsubs.push(projRef().collection('advances').onSnapshot(qs=>{
+    advances=qs.docs.map(d=>Object.assign({id:d.id},d.data())); refreshAll();
+  },err=>console.warn('advances',err)));
 }
 
 /* ============ Project create / join / leave ============ */
@@ -655,7 +728,7 @@ function setProject(code){
 }
 function leaveProject(){
   detachListeners(); projectCode=null; lsDel('remont_project');
-  receipts=[]; shopping=[]; settings={name:'',cur:'₾',budMat:0,budWork:0};
+  receipts=[]; shopping=[]; advances=[]; settings={name:'',cur:'₾',budMat:0,budWork:0};
   showOnboarding();
 }
 function leaveProjectConfirm(){ if(!confirm(t('confirm_leave')))return; leaveProject(); toast(t('sync_left')); }
@@ -719,12 +792,119 @@ function go(v){
   if(v==='home')renderHome();
   if(v==='receipts')renderReceipts();
   if(v==='shop')renderShop();
+  if(v==='adv')renderAdv();
   if(v==='set')fillSettings();
 }
 
 /* ============ Home ============ */
 function spentBy(type){return receipts.filter(r=>r.type===type).reduce((s,r)=>s+(Number(r.amount)||0),0);}
 function plannedBy(type){return shopping.filter(s=>s.type===type&&!s.done).reduce((s,r)=>s+(Number(r.amount)||0),0);}
+
+/* ============ Advances (подотчёт) ============ */
+function normName(s){return String(s||'').trim();}
+function advPersons(){
+  const set=new Set();
+  advances.forEach(a=>{const n=normName(a.person); if(n)set.add(n);});
+  receipts.forEach(r=>{const n=normName(r.by); if(n)set.add(n);});
+  return [...set];
+}
+function advGivenBy(p){return advances.filter(a=>normName(a.person)===p).reduce((s,a)=>s+(Number(a.amount)||0),0);}
+function advSpentBy(p){return receipts.filter(r=>r.type==='material'&&normName(r.by)===p).reduce((s,r)=>s+(Number(r.amount)||0),0);}
+function advTotals(){
+  const withAdv=advPersons().filter(p=>advGivenBy(p)>0);
+  let given=0, spent=0;
+  withAdv.forEach(p=>{ given+=advGivenBy(p); spent+=advSpentBy(p); });
+  return {given, spent, onHand:given-spent, persons:withAdv};
+}
+function fillPersonList(){
+  const opts=advPersons().map(p=>`<option value="${esc(p)}">`).join('');
+  const el=document.getElementById('personlist'); if(el)el.innerHTML=opts;
+}
+function renderAdv(){
+  fillPersonList();
+  const tot=advTotals();
+  document.getElementById('advGivenTot').textContent=money(tot.given);
+  document.getElementById('advSpentTot').textContent=money(tot.spent);
+  const oh=document.getElementById('advOnHand');
+  oh.textContent=money(tot.onHand);
+  oh.style.color=tot.onHand<-0.009?'var(--bad)':'var(--ink)';
+  const list=document.getElementById('advList');
+  const persons=tot.persons.sort((a,b)=>advLeftBy(b)-advLeftBy(a));
+  if(!persons.length){
+    list.innerHTML=`<div class="empty"><div class="em">${icon('wallet',44)}</div>${t('adv_no')}<br>${t('adv_no2')}</div>`;
+    return;
+  }
+  list.innerHTML=persons.map(p=>{
+    const g=advGivenBy(p), sp=advSpentBy(p), left=g-sp;
+    const leftCol=left<-0.009?'var(--bad)':'var(--ok)';
+    const leftLbl=left<-0.009?t('adv_over'):t('adv_left');
+    return `<div class="item" onclick="openAdvPerson('${esc(p)}')">
+      <div class="thumb mat">${icon('user',22)}</div>
+      <div class="mid">
+        <div class="t1">${esc(p)}</div>
+        <div class="t2">${t('adv_spent')}: ${money(sp)} ${t('adv_of')} ${money(g)}</div>
+      </div>
+      <div style="text-align:right;white-space:nowrap">
+        <div class="amt" style="color:${leftCol}">${money(Math.abs(left))}</div>
+        <div class="mini">${leftLbl}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const hist=[...advances].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||((b.createdAt||0)-(a.createdAt||0)));
+  if(hist.length){
+    list.innerHTML+=`<div class="mini" style="font-weight:700;margin:18px 2px 8px">${t('adv_hist')}</div>`+
+      hist.map(a=>`<div class="item" onclick="openAdvEdit('${a.id}')">
+        <div class="thumb mat">${icon('wallet',20)}</div>
+        <div class="mid"><div class="t1">${esc(a.person||'')}</div><div class="t2">${esc([shortDate(a.date),a.note].filter(Boolean).join(' · ')||'—')}</div></div>
+        <div class="amt">${money(a.amount)}</div>
+      </div>`).join('');
+  }
+}
+function advLeftBy(p){return advGivenBy(p)-advSpentBy(p);}
+
+/* advance sheet */
+let editingAdv=null;
+function openAdv(person){
+  editingAdv=null;
+  fillPersonList();
+  document.getElementById('advTitle').textContent=t('adv_title_new');
+  document.getElementById('advPerson').value=(typeof person==='string')?person:'';
+  document.getElementById('advAmount').value='';
+  document.getElementById('advDate').value=todayISO();
+  document.getElementById('advNote').value='';
+  document.getElementById('advDelBtn').style.display='none';
+  openSheet('sheetAdv');
+}
+function openAdvEdit(id){
+  const a=advances.find(x=>x.id===id); if(!a)return;
+  editingAdv=a;
+  fillPersonList();
+  document.getElementById('advTitle').textContent=t('adv_title_edit');
+  document.getElementById('advPerson').value=a.person||'';
+  document.getElementById('advAmount').value=a.amount||'';
+  document.getElementById('advDate').value=a.date||todayISO();
+  document.getElementById('advNote').value=a.note||'';
+  document.getElementById('advDelBtn').style.display='block';
+  openSheet('sheetAdv');
+}
+function openAdvPerson(p){ openAdv(p); }
+async function saveAdv(){
+  const person=normName(document.getElementById('advPerson').value);
+  const amount=parseFloat(document.getElementById('advAmount').value);
+  if(!person||!(amount>0)){toast(t('adv_need'));return;}
+  const a=editingAdv?Object.assign({},editingAdv):{id:uid(),createdAt:Date.now()};
+  a.person=person; a.amount=amount;
+  a.date=document.getElementById('advDate').value||todayISO();
+  a.note=document.getElementById('advNote').value.trim();
+  await cloudPut('advances',a);
+  closeSheet('sheetAdv'); toast(t('t_adv_given'));
+}
+async function deleteAdv(){
+  if(!editingAdv)return;
+  if(!confirm(t('confirm_adv_del')))return;
+  await cloudDel('advances',editingAdv.id);
+  closeSheet('sheetAdv'); toast(t('t_adv_del'));
+}
 function budgetCard(type){
   const isMat=type==='material';
   const budget=isMat?settings.budMat:settings.budWork;
@@ -740,6 +920,7 @@ function budgetCard(type){
   else if(over){hint=`<div class="hint bad">${t('over_by',money(spent-budget))}</div>`;}
   else if(near){hint=`<div class="hint warn">${t('near_warn')}</div>`;}
   else {hint=`<div class="hint">${t('used_pct',Math.round(pct))}</div>`;}
+  if(isMat){ const oh=advTotals().onHand; if(oh>0.009) hint+=`<div class="hint">${t('adv_onhand_lbl')}: <b>${money(oh)}</b></div>`; }
   return `
     <span class="tag ${cls}">${icon(isMat?'box':'wrench',14)} ${t(isMat?'mat':'work')}</span>
     <div class="bignum">${money(left<0?0:left)} <small>${left<0?t('over_word'):t('left_word')}</small></div>
@@ -944,7 +1125,7 @@ function setType(sel,tp){curType=tp;document.querySelectorAll(sel+' button').for
 function openReceipt(id){
   editingRec=null; curPhoto=null; pendingShopLink=null; curItems=[];
   document.getElementById('budgetHint').style.display='none';
-  fillCatSuggest();
+  fillCatSuggest(); fillPersonList();
   document.getElementById('amountSuggest').innerHTML='';
   document.getElementById('ocrStatus').textContent='';
   document.getElementById('ocrBtn').style.display='none';
@@ -959,6 +1140,7 @@ function openReceipt(id){
       document.getElementById('recDate').value=r.date||todayISO();
       document.getElementById('recCat').value=r.cat||'';
       document.getElementById('recStore').value=r.store||'';
+      document.getElementById('recBy').value=r.by||'';
       document.getElementById('recNote').value=r.note||'';
       curItems=Array.isArray(r.items)?r.items.map(x=>({name:x.name,qty:x.qty||1,price:x.price})):[];
       if(curPhoto){document.getElementById('photoPreview').innerHTML=`<img src="${curPhoto}">`;document.getElementById('ocrBtn').style.display='inline-flex';}
@@ -971,6 +1153,7 @@ function openReceipt(id){
     document.getElementById('recDate').value=todayISO();
     document.getElementById('recCat').value='';
     document.getElementById('recStore').value='';
+    document.getElementById('recBy').value=meName||'';
     document.getElementById('recNote').value='';
     document.getElementById('recDelBtn').style.display='none';
   }
@@ -990,6 +1173,7 @@ async function saveReceipt(){
   rec.date=document.getElementById('recDate').value||todayISO();
   rec.cat=document.getElementById('recCat').value.trim();
   rec.store=document.getElementById('recStore').value.trim();
+  rec.by=document.getElementById('recBy').value.trim();
   rec.note=document.getElementById('recNote').value.trim();
   rec.photo=curPhoto||null;
   rec.items=curItems.filter(it=>(it.name&&String(it.name).trim())||Number(it.price)>0).map(it=>({name:(it.name||'').trim(),qty:Number(it.qty)||1,price:Number(it.price)||0}));
@@ -1164,7 +1348,7 @@ function applyHeader(){
 
 /* ============ Export ============ */
 function exportJSON(){
-  const data={version:2,exportedAt:new Date().toISOString(),code:projectCode,settings,receipts,shopping};
+  const data={version:3,exportedAt:new Date().toISOString(),code:projectCode,settings,receipts,shopping,advances};
   downloadFile(JSON.stringify(data,null,2),'application/json',`remont-backup-${todayISO()}.json`);
   toast(t('t_backup_saved'));
 }
@@ -1187,7 +1371,7 @@ function downloadFile(content,type,name){
 }
 async function wipe(){
   if(!confirm(t('confirm_wipe')))return;
-  await cloudClear('receipts');await cloudClear('shopping');
+  await cloudClear('receipts');await cloudClear('shopping');await cloudClear('advances');
   toast(t('t_wiped'));
 }
 
@@ -1201,7 +1385,7 @@ function closeSheet(id){document.getElementById(id).classList.remove('open');doc
 document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)closeSheet(bg.id);}));
 document.getElementById('recSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;recFilter=b.dataset.f;document.querySelectorAll('#recSeg button').forEach(x=>x.classList.toggle('on',x===b));renderReceipts();});
 document.getElementById('shopSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;shopFilter=b.dataset.f;document.querySelectorAll('#shopSeg button').forEach(x=>x.classList.toggle('on',x===b));renderShop();});
-function refreshAll(){renderHome();renderReceipts();renderShop();}
+function refreshAll(){renderHome();renderReceipts();renderShop();renderAdv();}
 
 /* ============ Init ============ */
 function init(){
