@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Проверка</title>
+<style>
+body{font:15px/1.45 -apple-system,system-ui,sans-serif;margin:0;padding:16px;background:#f4efe7;color:#1d1718}
+h1{font-size:20px;margin:0 0 12px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #0001;word-break:break-all}
+.ok{color:#1a7f37;font-weight:600}.bad{color:#c62828;font-weight:600}
+img{max-width:48%;height:auto;border-radius:8px;margin-top:8px}
+pre{white-space:pre-wrap;font-size:12px;background:#fff;padding:10px;border-radius:8px}
+</style>
+</head>
+<body>
+<h1>Проверка роадбука на телефоне</h1>
+<p>Подождите 5 секунд и сделайте скриншот всей страницы.</p>
+<div id="out"></div>
+<div><img id="i1" src="img/p01_0.jpg" alt="JPEG"> <img id="i2" src="img/p01_0.webp" alt="WebP"></div>
+<pre id="ua"></pre>
+<script>
+var out=document.getElementById('out');
+function row(name,ok,extra){var d=document.createElement('div');d.className='row';d.innerHTML='<span>'+name+'</span><span class="'+(ok?'ok':'bad')+'">'+(ok?'да':'НЕТ')+(extra?' · '+extra:'')+'</span>';out.appendChild(d);}
+document.getElementById('ua').textContent='Адрес: '+location.href+'\nБраузер: '+navigator.userAgent;
+row('Скрипты на странице работают',true);
+function img(name,src){var i=new Image();var t=Date.now();i.onload=function(){row(name,true,i.naturalWidth+'px, '+(Date.now()-t)+' мс')};i.onerror=function(){row(name,false,'ошибка загрузки')};i.src=src+'?t='+t;}
+img('Фото JPEG (img/p01_0.jpg)','img/p01_0.jpg');
+img('Фото WebP (img/p01_0.webp)','img/p01_0.webp');
+img('Фото JPEG по полному адресу','https://www.grinbergart.com/travel/img/p05_0.jpg');
+function js(name,src){var t=Date.now();if(!window.fetch){row(name,false,'нет fetch');return;}
+  fetch(src,{cache:'no-store'}).then(function(r){return r.text().then(function(x){row(name,r.ok,r.status+', '+Math.round(x.length/1024)+' КБ, '+(Date.now()-t)+' мс')})}).catch(function(e){row(name,false,String(e))});}
+js('Скрипт анимации (lib/gsap.min.js)','lib/gsap.min.js');
+js('Скрипт карты (lib/maplibre-gl.js)','lib/maplibre-gl.js');
+var c=document.createElement('canvas');var g2=null,g1=null;try{g2=c.getContext('webgl2')}catch(e){}try{g1=document.createElement('canvas').getContext('webgl')}catch(e){}
+row('3D (WebGL2)',!!g2);row('3D (WebGL1)',!!g1);
+row('IntersectionObserver','IntersectionObserver' in window);
+</script>
+</body>
+</html>
