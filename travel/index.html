@@ -39,7 +39,8 @@ h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.03em;line-h
 .top b{font-weight:500}
 .top nav{display:flex;gap:22px}.top nav a{text-decoration:none;opacity:.8;color:inherit}.top nav a:hover{opacity:1}
 
-.ph{position:relative;overflow:hidden;border-radius:var(--r);background:rgba(0,0,0,.06);cursor:zoom-in}
+.ph{position:relative;overflow:hidden;border-radius:var(--r);background:rgba(0,0,0,.06);cursor:pointer;-webkit-tap-highlight-color:transparent}
+@media (hover:hover){.ph{cursor:zoom-in}}
 .ph img{position:absolute;left:0;top:-7%;width:100%;height:114%;object-fit:cover}
 
 /* первый экран: окно раскрывается во весь экран */
@@ -383,7 +384,7 @@ const $=(s,c=document)=>c.querySelector(s), $$=(s,c=document)=>[...c.querySelect
 const pad=n=>String(n).padStart(2,'0');
 const CHBG={air:'#E3E7EB',fire:'#EFE1D2',water:'#DEE9E6'};
 const CHACC={air:'#4F6684',fire:'#9C4A26',water:'#2E6A66'};
-const ph=(id,alt,cls='',eager)=>`<figure class="ph ${cls}" data-full="${id}"><img src="img/${id}.webp" width="${SZ[id][0]}" height="${SZ[id][1]}" alt="${alt}" ${eager?'':'loading="lazy"'} decoding="async"></figure>`;
+const ph=(id,alt,cls='',eager)=>`<figure class="ph ${cls}" data-full="${id}"><img ${eager?'src':'data-src'}="img/${id}.webp" width="${SZ[id][0]}" height="${SZ[id][1]}" alt="${alt}" decoding="async"></figure>`;
 
 function dayHTML(n,ch){
   const d=DAYS[n];
@@ -400,7 +401,7 @@ function dayHTML(n,ch){
       <div class="collage">${d.cards.map((c,i)=>`<div class="pol" data-i="${i}"><div class="pol-in">${ph(c,d.t)}</div></div>`).join('')}</div>
     </div></section>`;
   if(d.film) h+=`<section class="film" data-film data-bg="${CHBG[ch.id]}"><div class="wrap film-head"><div class="label">День ${n} · кадры</div><h3>${d.film.h}</h3></div>
-    <div class="film-track">${d.film.imgs.map(c=>`<figure class="ph" data-full="${c}" style="aspect-ratio:${SZ[c][0]}/${SZ[c][1]}"><img src="img/${c}.webp" alt="${d.film.h}" loading="lazy" decoding="async"></figure>`).join('')}<p class="film-end">${d.film.end}</p></div></section>`;
+    <div class="film-track">${d.film.imgs.map(c=>`<figure class="ph" data-full="${c}" style="aspect-ratio:${SZ[c][0]}/${SZ[c][1]}"><img data-src="img/${c}.webp" alt="${d.film.h}" decoding="async"></figure>`).join('')}<p class="film-end">${d.film.end}</p></div></section>`;
   return h;
 }
 
@@ -408,16 +409,22 @@ $('#cities').innerHTML=CITIES.map(c=>`<article class="city" data-r>${ph(c.img,c.
 $('#stack').insertAdjacentHTML('beforeend',THEMES.map((t,i)=>`<article class="st-card">${ph(t.img,t.h)}<div class="st-in"><div class="st-n">${pad(i+1)}</div><div><h3>${t.h}</h3>${t.p.map(x=>`<p>${x}</p>`).join('')}</div></div></article>`).join(''));
 $('#journey').innerHTML=CHAPTERS.map(c=>`
   <section class="chapter" id="ch-${c.id}" data-bg="${CHBG[c.id]}">
-    <div class="frame"><img src="img/${c.img}.webp" alt="${c.word}" loading="lazy"></div>
+    <div class="frame"><img data-src="img/${c.img}.webp" alt="${c.word}"></div>
     <div class="wrap in"><div class="label">${c.num}</div><h2><span class="line-mask"><span>${c.word[0]+c.word.slice(1).toLowerCase()}</span></span></h2></div>
   </section>
   <section data-bg="${CHBG[c.id]}" style="--accent:${CHACC[c.id]}"><div class="wrap ch-text"><div><p class="lead" data-r>${c.lead}</p>${c.close?`<p class="close" data-r>${c.close}</p>`:''}</div>
     <ol>${c.list.map(l=>`<li data-r><span>${l}</span></li>`).join('')}</ol></div></section>
   ${c.days.map(n=>dayHTML(n,c)).join('')}`).join('')+`
-  <section class="finale" data-day="15" data-bg="#EEE8DF"><div class="bgimg"><img src="img/p25_0.webp" alt="Побережье на рассвете" loading="lazy"></div>
+  <section class="finale" data-day="15" data-bg="#EEE8DF"><div class="bgimg"><img data-src="img/p25_0.webp" alt="Побережье на рассвете"></div>
     <div class="wrap in"><div class="label">День 15 из 15</div><h2><span class="line-mask"><span>Вылет</span></span></h2><p>Дорога домой</p></div></section>`;
 $('#inclGrid').innerHTML=INCL.map(g=>`<div class="grp" data-r><h3>${g.h}</h3><ul>${g.l.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')+`<div class="grp not" data-r><h3>Не включено</h3><ul>${NOT.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
 $$('[data-words]').forEach(el=>{el.innerHTML=el.textContent.trim().split(/\s+/).map(w=>`<span class="wd">${w}</span>`).join(' ')});
+
+/* фото подгружаются заранее, за полтора экрана до появления (в любую сторону) */
+// следим за целыми секциями, а не за отдельными фото: фото в анимации может стоять за краем экрана, и браузер его «не видит»
+const loadIn=z=>$$('img[data-src]',z).forEach(i=>{i.src=i.dataset.src;i.removeAttribute('data-src');});
+const imgIO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;loadIn(e.target);imgIO.unobserve(e.target);}),{rootMargin:'150% 0px'}):null;
+[...new Set($$('img[data-src]').map(i=>i.closest('section,.st-card,article')||document.body))].forEach(z=>imgIO?imgIO.observe(z):loadIn(z));
 
 /* итог по дням */
 const FLY={6:1,8:1,11:1,14:1};
@@ -432,7 +439,7 @@ let lbI=0;const lb=$('#lb'),lbImg=$('#lbImg');
 function lbShow(i){lbI=(i+gallery.length)%gallery.length;lbImg.src=`img/${gallery[lbI]}.webp`;$('#lbCount').textContent=`${lbI+1} из ${gallery.length}`;gsap.fromTo(lbImg,{opacity:0,scale:.98},{opacity:1,scale:1,duration:.5,ease:'power2.out'});}
 function lbOpen(id){lbShow(gallery.indexOf(id));lb.classList.add('open');lenis&&lenis.stop();}
 function lbClose(){lb.classList.remove('open');lenis&&lenis.start();}
-document.addEventListener('click',e=>{const m=e.target.closest('[data-full]');if(m&&!m.closest('.st-card'))lbOpen(m.dataset.full);});
+$$('[data-full]').forEach(el=>{if(el.closest('.st-card'))return;el.setAttribute('role','button');el.setAttribute('tabindex','0');el.addEventListener('click',()=>lbOpen(el.dataset.full));el.addEventListener('keydown',e=>{if(e.key==='Enter')lbOpen(el.dataset.full);});});
 $('#lbClose').onclick=lbClose;$('#lbPrev').onclick=()=>lbShow(lbI-1);$('#lbNext').onclick=()=>lbShow(lbI+1);
 lb.addEventListener('click',e=>{if(e.target===lb)lbClose()});
 document.addEventListener('keydown',e=>{if(!lb.classList.contains('open'))return;if(e.key==='Escape')lbClose();if(e.key==='ArrowLeft')lbShow(lbI-1);if(e.key==='ArrowRight')lbShow(lbI+1);});
@@ -515,7 +522,7 @@ function init(){
 
   const order=new Map($$('*').map((e,i)=>[e,i]));const pos=st=>st.trigger&&order.has(st.trigger)?order.get(st.trigger):1e9;
   ScrollTrigger.sort((a,b)=>pos(a)-pos(b)||a.start-b.start);ScrollTrigger.refresh();
-  let t;$$('img[loading="lazy"]').forEach(i=>i.addEventListener('load',()=>{clearTimeout(t);t=setTimeout(()=>ScrollTrigger.refresh(),300)},{once:true}));
+  let t;$$('img[data-src]').forEach(i=>i.addEventListener('load',()=>{clearTimeout(t);t=setTimeout(()=>ScrollTrigger.refresh(),300)},{once:true}));
 }
 
 /* ============ 3D-карта: глобус → спутник и рельеф, камера летит по маршруту ============ */
