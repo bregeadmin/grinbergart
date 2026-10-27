@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Австралия · Три стихии</title>
+<meta name="description" content="Роадбук группы: Австралия, июль 2026. Пятнадцать дней от Мельбурна до Большого Барьерного рифа.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600&family=Onest:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lib/maplibre-gl.css">
+<style>
+/* Журнальная сетка и мягкая смена фона по главам; фото работают как в первой версии: закрепляются, раскрываются, накладываются */
+:root{
+  --bg:#EEE8DF; --ink:#1D1718; --muted:rgba(29,23,24,.6); --line:rgba(29,23,24,.12); --paper:#FBF8F2;
+  --night:#0E1316; --accent:#9C4A26; --r:14px;
+  --air:#A9BCD6; --fire:#F2A877; --water:#8FD1C4;
+  --display:'Geologica',system-ui,-apple-system,'Segoe UI',sans-serif; --sans:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --gut:max(clamp(16px,4vw,64px),env(safe-area-inset-left,0px)); --gutr:max(clamp(16px,4vw,64px),env(safe-area-inset-right,0px));
+  color-scheme:light;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}
+html{overflow-x:clip;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:clamp(15.5px,1.05vw,17.5px);line-height:1.62;overflow-x:clip;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.03em;line-height:1.02;text-wrap:balance}
+.label{font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.wrap{padding-left:var(--gut);padding-right:var(--gutr);max-width:1480px;margin:0 auto}
+.line-mask{display:block;overflow:hidden;padding-bottom:.06em}.line-mask>span{display:block}
+
+.top{position:fixed;left:0;right:0;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
+  padding:calc(14px + env(safe-area-inset-top,0px)) var(--gutr) 14px var(--gut);font-size:13px;color:var(--ink);transition:color .5s,background-color .5s}
+.top.solid{background:rgba(238,232,223,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.top.on-dark{color:#fff;background:rgba(14,19,22,.35);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.top b{font-weight:500}
+.top nav{display:flex;gap:22px}.top nav a{text-decoration:none;opacity:.8;color:inherit}.top nav a:hover{opacity:1}
+
+.ph{position:relative;overflow:hidden;border-radius:var(--r);background:rgba(0,0,0,.06);cursor:zoom-in}
+.ph img{position:absolute;left:0;top:-7%;width:100%;height:114%;object-fit:cover}
+
+/* первый экран: окно раскрывается во весь экран */
+.hero{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;background:var(--bg)}
+.hero-media{position:absolute;inset:0;clip-path:inset(11% 33% 33% 33% round 18px);will-change:clip-path}
+.hero-media img{width:100%;height:100%;object-fit:cover;transform:scale(1.25)}
+.hero-media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,10,8,.25),rgba(14,10,8,0) 30%,rgba(14,10,8,0) 45%,rgba(14,10,8,.65));opacity:var(--sh,0)}
+.hero-side{position:absolute;top:11vh;width:clamp(120px,14vw,220px);aspect-ratio:3/4;left:50%;margin-left:calc(clamp(120px,14vw,220px) * -.5);border-radius:14px;overflow:hidden;opacity:0;box-shadow:0 30px 60px -30px rgba(0,0,0,.4)}
+.hero-side img{width:100%;height:100%;object-fit:cover}
+.hero .in{position:absolute;left:0;right:0;bottom:0;z-index:2;padding-bottom:clamp(24px,5vh,56px);display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px}
+.hero .label{color:inherit;opacity:.7}
+.hero h1{font-size:clamp(64px,12.5vw,214px);font-weight:500;letter-spacing:-.055em;line-height:.86;margin:12px 0 14px}
+.hero .sub{font-family:var(--display);font-weight:300;font-size:clamp(19px,1.9vw,28px)}
+.hero .facts{display:flex;gap:clamp(18px,3vw,44px);text-align:right}
+.hero .facts b{display:block;font-family:var(--display);font-weight:400;font-size:clamp(22px,2.2vw,34px);letter-spacing:-.02em}
+.hero .facts span{font-size:13px;opacity:.75}
+
+.intro{padding-block:clamp(110px,18vh,220px) clamp(80px,12vh,140px)}
+.intro .big{font-family:var(--display);font-weight:300;font-size:clamp(28px,3.9vw,62px);line-height:1.12;letter-spacing:-.03em;max-width:21em;margin-top:22px}
+.intro .wd{opacity:.16}
+.cities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px);padding-bottom:clamp(100px,16vh,190px)}
+.city .ph{aspect-ratio:4/5}
+.city h3{font-size:clamp(28px,2.6vw,40px);font-weight:500;margin:20px 0 8px}
+.city p{color:var(--muted);max-width:34ch}.city p em{display:block;font-style:normal;color:var(--ink);margin-top:8px}
+
+/* темы: карточки закрепляются и накладываются */
+.stack{padding-bottom:clamp(60px,10vh,120px)}
+.st-card{position:sticky;top:11vh;height:78vh;min-height:460px;margin:0 auto 34vh;border-radius:22px;overflow:hidden;color:#fff;transform-origin:50% 0;will-change:transform}
+.st-card:last-child{margin-bottom:6vh}
+.st-card .ph{position:absolute;inset:0;border-radius:0;cursor:default}
+.st-card::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,8,8,.68),rgba(10,8,8,.1) 72%);pointer-events:none}
+.st-in{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:clamp(24px,4vw,60px);display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,4vw,60px);align-items:end}
+.st-n{font-family:var(--display);font-weight:300;font-size:clamp(70px,11vw,180px);line-height:.8;letter-spacing:-.05em;opacity:.55}
+.st-card h3{font-size:clamp(28px,3.4vw,54px);font-weight:500;margin-bottom:14px}
+.st-card p{max-width:38em;opacity:.92;margin-top:6px}
+
+/* карта */
+.map{position:relative;height:100vh;height:100svh;background:var(--night);color:#fff;overflow:hidden}
+#mapCanvas{position:absolute;inset:0}
+.map .card{position:absolute;left:var(--gut);bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:3;width:min(420px,calc(100% - 32px));padding:22px 24px 20px;border-radius:18px;
+  background:rgba(14,19,22,.55);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2);border:1px solid rgba(255,255,255,.12)}
+.map .card .label{color:rgba(255,255,255,.6)}
+.map .card h3{font-size:clamp(26px,2.4vw,36px);font-weight:500;margin:8px 0}
+.map .card p{color:rgba(255,255,255,.78);font-size:15px;min-height:2.6em}
+.map .steps-dots{display:flex;gap:6px;margin-top:16px}
+.map .steps-dots i{flex:1;height:2px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;position:relative}
+.map .steps-dots i b{position:absolute;inset:0;background:#F2C98A;transform-origin:left;transform:scaleX(0)}
+.map .intro-t{position:absolute;top:calc(84px + env(safe-area-inset-top,0px));left:var(--gut);z-index:3}
+.map .intro-t h2{font-size:clamp(34px,4vw,64px);font-weight:500}
+.pin{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:12.5px;font-weight:500;color:#fff;white-space:nowrap;opacity:0;transition:opacity .5s;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.pin i{width:9px;height:9px;border-radius:50%;background:#F2C98A;box-shadow:0 0 0 3px rgba(242,201,138,.28)}
+.pin.on{opacity:1}
+.maplibregl-ctrl-attrib{font-size:10px!important;background:rgba(14,19,22,.5)!important;color:rgba(255,255,255,.6)!important}
+.maplibregl-ctrl-attrib a{color:rgba(255,255,255,.7)!important}
+
+/* итог по дням — последний кадр карты */
+.sum{position:absolute;z-index:4;top:calc(76px + env(safe-area-inset-top,0px));right:var(--gutr);bottom:calc(28px + env(safe-area-inset-bottom,0px));width:min(880px,64vw);
+  border-radius:22px;padding:clamp(22px,2.6vw,40px);background:rgba(12,16,18,.84);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);border:1px solid rgba(255,255,255,.12);
+  opacity:0;pointer-events:none;display:flex;flex-direction:column;overflow:hidden}
+.sum-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:clamp(14px,2.4vh,26px)}
+.sum-head h3{font-size:clamp(28px,2.8vw,46px);font-weight:500}
+.sum-head .label{color:rgba(255,255,255,.6)}
+.sum-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,1.8vw,28px);flex:1;min-height:0}
+.sum-col h4{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:500;font-size:clamp(18px,1.5vw,22px);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.14)}
+.sum-col h4 i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.sum-col h4 small{margin-left:auto;font-family:var(--sans);font-size:12px;font-weight:400;opacity:.6}
+.sd{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;padding:clamp(6px,1vh,10px) 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.sd b{font-family:var(--display);font-weight:500;font-size:clamp(20px,1.7vw,26px);line-height:1;color:var(--c);font-variant-numeric:tabular-nums;grid-row:span 2}
+.sd span{font-weight:500;font-size:clamp(13.5px,1vw,15px);line-height:1.25}
+.sd em{font-style:normal;font-size:12.5px;opacity:.6;line-height:1.3}
+.sd .tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:500;letter-spacing:.04em;background:rgba(255,255,255,.12);vertical-align:1px}
+
+/* глава: рамка раскрывается во весь экран */
+.chapter{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;color:#fff}
+.chapter .frame{position:absolute;inset:0;clip-path:inset(14% 22% 14% 22% round 22px);will-change:clip-path}
+.chapter .frame img{width:100%;height:100%;object-fit:cover;transform:scale(1.25);will-change:transform}
+.chapter .frame::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,8,.15),rgba(10,8,8,0) 40%,rgba(10,8,8,.55))}
+.chapter .in{position:absolute;left:0;right:0;bottom:clamp(30px,7vh,72px);z-index:2}
+.chapter .label{color:rgba(255,255,255,.85)}
+.chapter h2{font-size:clamp(80px,15vw,260px);font-weight:500;letter-spacing:-.06em;line-height:.84;margin-top:12px}
+.ch-text{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(28px,6vw,110px);padding-block:clamp(80px,13vh,150px)}
+.ch-text .lead{font-family:var(--display);font-weight:300;font-size:clamp(26px,2.7vw,42px);line-height:1.18;letter-spacing:-.02em}
+.ch-text .close{margin-top:26px;font-family:var(--display);font-weight:300;font-size:1.2em;color:var(--muted)}
+.ch-text ol{list-style:none;counter-reset:c}
+.ch-text li{counter-increment:c;display:grid;grid-template-columns:40px 1fr;padding:12px 0;border-top:1px solid var(--line)}
+.ch-text li::before{content:counter(c,decimal-leading-zero);font-size:12px;color:var(--muted);padding-top:3px}
+
+/* день: фото раскрывается из рамки, номер дня проплывает поверх */
+.day{position:relative;padding-bottom:clamp(70px,12vh,150px)}
+.day-hero{position:relative;height:90vh;height:90svh;min-height:440px}
+.day-hero .ph{position:absolute;inset:0;border-radius:0;clip-path:inset(10% 7% 10% 7% round 22px);will-change:clip-path}
+.day-hero .ph img{top:-12%;height:124%;will-change:transform}
+.day-hero .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),transparent 30%,transparent 60%,rgba(0,0,0,.4));pointer-events:none}
+.day-num{position:absolute;right:var(--gutr);bottom:calc(10% + 4px);z-index:3;font-family:var(--display);font-weight:600;font-size:clamp(120px,24vw,420px);line-height:.8;letter-spacing:-.07em;color:#fff;pointer-events:none;text-shadow:0 10px 60px rgba(0,0,0,.25)}
+.day-kick{position:absolute;left:calc(7% + 22px);top:calc(10% + 20px);z-index:3;display:flex;gap:8px;flex-wrap:wrap;color:#fff}
+.pill{font-size:12px;letter-spacing:.06em;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.day-body{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(30px,5vw,90px);padding-top:clamp(50px,9vh,110px)}
+.dtitle{font-size:clamp(38px,4.8vw,80px);font-weight:500}
+.dsub{font-family:var(--display);font-weight:300;font-size:clamp(19px,1.7vw,26px);color:var(--accent);margin-top:10px}
+.mood{font-family:var(--display);font-weight:300;font-size:clamp(20px,1.7vw,26px);line-height:1.3;margin:26px 0 20px;padding-left:18px;border-left:2px solid var(--accent)}
+.mood small{display:block;font-family:var(--sans);font-size:11.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.locs{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin-bottom:24px}
+.locs li{font-size:12.5px;padding:5px 11px;border-radius:99px;border:1px solid var(--line)}
+.prose p{margin-bottom:.9em;max-width:38em}
+.drive{display:flex;align-items:baseline;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.drive b{font-family:var(--display);font-weight:400;font-size:34px;color:var(--ink);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.collage{display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-start;padding-top:20px}
+.pol{width:clamp(150px,18vw,280px);background:var(--paper);padding:9px 9px 32px;margin:-10px -16px;box-shadow:0 30px 60px -22px rgba(0,0,0,.45),0 4px 12px rgba(0,0,0,.1);will-change:transform}
+.pol .ph{aspect-ratio:4/5;border-radius:2px}
+.pol:nth-child(2){margin-top:56px;z-index:2}
+.pol-in{transition:transform .6s cubic-bezier(.22,1,.36,1)}
+@media (hover:hover){.pol:hover{z-index:5}.pol:hover .pol-in{transform:rotate(calc(var(--r) * -1deg)) scale(1.05)}}
+
+.film{overflow:hidden}
+.film-head{padding-top:clamp(50px,8vh,90px)}
+.film-head h3{font-size:clamp(28px,3vw,46px);font-weight:500;margin-top:8px}
+.film-track{display:flex;gap:clamp(12px,1.6vw,22px);align-items:center;padding:clamp(28px,4vh,44px) var(--gutr) clamp(70px,11vh,120px) var(--gut);width:max-content}
+.film-track .ph{height:min(64vh,620px);flex:none}
+.film-track .ph:nth-child(even){height:min(50vh,480px)}
+.film-end{flex:none;width:clamp(220px,22vw,320px);font-family:var(--display);font-weight:300;font-size:clamp(22px,2vw,30px);line-height:1.2}
+
+.finale{position:relative;height:120vh;overflow:hidden;color:#fff}
+.finale .bgimg{position:absolute;inset:0}.finale .bgimg img{width:100%;height:100%;object-fit:cover}
+.finale::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55));pointer-events:none}
+.finale .in{position:absolute;left:0;right:0;bottom:clamp(40px,14vh,140px);z-index:2}
+.finale .label{color:rgba(255,255,255,.85)}
+.finale h2{font-size:clamp(80px,14vw,240px);font-weight:500;letter-spacing:-.06em;line-height:.85;margin-top:12px}
+.finale p{font-family:var(--display);font-weight:300;font-size:clamp(20px,2vw,30px);margin-top:12px}
+.incl{padding-block:clamp(90px,14vh,160px) clamp(60px,10vh,110px)}
+.incl h2{font-size:clamp(50px,6.4vw,110px);font-weight:500;margin:12px 0 clamp(30px,5vh,56px)}
+.incl-grid{columns:3 280px;column-gap:clamp(24px,4vw,64px)}
+.grp{break-inside:avoid;margin-bottom:32px}
+.grp h3{font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.grp li{list-style:none;padding:7px 0;border-top:1px solid var(--line)}
+.grp.not{background:var(--ink);color:#F2EBE2;border-radius:var(--r);padding:22px 24px 16px}
+.grp.not h3{color:#F2C98A}.grp.not li{border-color:rgba(242,235,226,.18)}
+footer{padding-block:32px calc(32px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}
+footer button{text-decoration:underline;text-underline-offset:3px}
+
+.lb{position:fixed;inset:0;z-index:80;background:rgba(14,12,12,.94);display:none;align-items:center;justify-content:center;color:#F2EBE2}
+.lb.open{display:flex}.lb img{max-width:92vw;max-height:84vh;object-fit:contain;border-radius:8px}
+.lb-nav{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:0;right:0;display:flex;justify-content:center;gap:28px;font-size:14px}
+.lb-nav button{padding:8px 4px}.lb-close{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:var(--gutr);font-size:14px;padding:8px}
+
+@media (max-width:900px){
+  .top nav{display:none}
+  .hero-media{clip-path:inset(12% 14% 40% 14% round 18px)}
+  .hero-side{top:16vh}
+  .hero .in{grid-template-columns:1fr}.hero .facts{text-align:left}
+  .cities{grid-template-columns:1fr}
+  .st-card{height:72vh;top:9vh}.st-in{grid-template-columns:1fr;gap:6px}.st-n{font-size:64px}
+  .ch-text,.day-body{grid-template-columns:1fr}
+  .chapter .frame{clip-path:inset(12% 8% 22% 8% round 18px)}
+  .day-hero{height:72vh;height:72svh}
+  .day-hero .ph{clip-path:inset(8% 4% 8% 4% round 16px)}
+  .day-kick{left:calc(4% + 14px);top:calc(8% + 14px)}
+  .collage{justify-content:flex-start;padding-left:14px}
+  .pol{width:44vw;margin:-8px -12px}.pol:nth-child(2){margin-top:36px}
+  .film-track{overflow-x:auto;width:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .film-track::-webkit-scrollbar{display:none}
+  .film-track .ph,.film-track .ph:nth-child(even){height:54vh;scroll-snap-align:center}
+  .map .card{left:12px;right:12px;width:auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));padding:16px 18px}
+  .sum{left:10px;right:10px;width:auto;top:calc(60px + env(safe-area-inset-top,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:16px}
+  .sum-head{margin-bottom:8px}.sum-head h3{font-size:24px}.sum-head .label{display:none}
+  .sum-cols{grid-template-columns:1fr;gap:6px}
+  .sum-col h4{font-size:15px;margin-bottom:2px;padding-bottom:4px}
+  .sd{padding:3px 0;grid-template-columns:28px 1fr}.sd b{font-size:15px;grid-row:auto}.sd em{display:none}.sd span{font-size:13px}
+}
+</style>
+</head>
+<body>
+<header class="top" id="top"><span><b>Австралия</b> · Три стихии</span>
+  <nav aria-label="Разделы"><a href="#route">Маршрут</a><a href="#ch-air">Воздух</a><a href="#ch-fire">Огонь</a><a href="#ch-water">Вода</a><a href="#incl">Включено</a></nav>
+  <span id="hudDay">июль 2026</span></header>
+
+<main>
+  <section class="hero" id="hero" data-bg="#EEE8DF">
+    <div class="hero-side l"><img src="img/p02_0.webp" alt="Улуру на закате"></div>
+    <div class="hero-side r"><img src="img/p03_0.webp" alt="Побережье на закате"></div>
+    <div class="hero-media" id="heroMedia"><picture><source media="(min-aspect-ratio: 4/5)" srcset="img/p04_0.webp"><img src="img/p01_0.webp" alt="Скалы Двенадцать апостолов"></picture></div>
+    <div class="wrap in" id="heroIn">
+      <div><div class="label" data-intro>Роадбук группы · июль 2026</div>
+        <h1><span class="line-mask"><span>Австралия</span></span></h1>
+        <p class="sub" data-intro>Три стихии: воздух, огонь, вода</p></div>
+      <div class="facts" data-intro><span><b>15 дней</b>Мельбурн → Брисбен</span><span><b>4 перелёта</b>через континент</span></div>
+    </div>
+  </section>
+
+  <section data-bg="#EEE8DF">
+    <div class="wrap intro"><div class="label" data-r>Сценарий путешествия</div>
+      <p class="big" data-words>Путешествие по континенту, выстроенное как последовательная смена состояний — от городской культуры к дикой природе, через сакральный центр континента к абсолютному расслаблению у океана...</p></div>
+    <div class="wrap"><div class="label" data-r style="margin-bottom:22px">Большие города как акты одного путешествия</div><div class="cities" id="cities"></div></div>
+  </section>
+
+  <section data-bg="#F3EFE8"><div class="wrap stack" id="stack"><div class="label" data-r style="padding-block:clamp(40px,6vh,70px) 26px">Из чего соткан маршрут</div></div></section>
+
+  <section class="map" id="route" data-bg="#0E1316" aria-label="Карта маршрута">
+    <div id="mapCanvas"></div>
+    <div class="intro-t wrap" id="mapIntro"><div class="label" style="color:rgba(255,255,255,.65)">Маршрут</div><h2>Континент за 15 дней</h2></div>
+    <div class="card"><div class="label" id="mapDay">Австралия</div><h3 id="mapTitle">Шесть точек на карте</h3><p id="mapText">Мельбурн — Великая океанская дорога — Улуру — Сидней — острова Кораллового моря — Брисбен.</p><div class="steps-dots" id="dots"></div></div>
+    <div class="sum" id="sum" aria-label="Итог: что в какой день">
+      <div class="sum-head"><h3>Пятнадцать дней</h3><span class="label">что в какой день</span></div>
+      <div class="sum-cols" id="sumCols"></div>
+    </div>
+  </section>
+
+  <div id="journey"></div>
+
+  <section data-bg="#EEE8DF" id="incl">
+    <div class="wrap incl"><div class="label">В стоимость тура</div><h2>Включено</h2><div class="incl-grid" id="inclGrid"></div></div>
+    <footer class="wrap"><span>Австралия · Три стихии · июль 2026</span><button id="toTop">Наверх</button></footer>
+  </section>
+</main>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Фото">
+  <button class="lb-close" id="lbClose">Закрыть</button><img id="lbImg" alt="">
+  <div class="lb-nav"><button id="lbPrev">← Назад</button><span id="lbCount"></span><button id="lbNext">Дальше →</button></div>
+</div>
+
+<script src="lib/gsap.min.js"></script>
+<script src="lib/ScrollTrigger.min.js"></script>
+<script src="lib/lenis.min.js"></script>
+<script src="lib/maplibre-gl.js"></script>
+<script>
+const SZ={"p01_0":[678,1200],"p02_0":[960,771],"p03_0":[1199,630],"p04_0":[1800,1057],"p05_0":[1200,652],"p05_1":[733,916],"p05_2":[733,916],"p05_3":[691,916],"p06_0":[682,852],"p06_1":[1024,556],"p06_2":[730,1045],"p06_3":[611,916],"p07_0":[957,1092],"p07_1":[427,640],"p07_2":[778,999],"p07_3":[1200,859],"p07_4":[732,953],"p08_0":[736,400],"p08_1":[733,916],"p08_2":[574,1021],"p08_3":[682,995],"p09_0":[1199,653],"p09_1":[702,872],"p09_2":[611,900],"p09_3":[624,780],"p10_0":[455,592],"p10_1":[619,675],"p10_2":[1024,1776],"p10_3":[1080,1222],"p10_4":[736,1104],"p11_0":[860,468],"p11_1":[568,715],"p11_2":[750,494],"p11_3":[611,916],"p12_0":[805,800],"p12_1":[1426,1158],"p12_2":[1025,900],"p12_3":[1156,1167],"p12_4":[851,1158],"p13_0":[736,438],"p14_0":[474,711],"p14_1":[1200,653],"p14_2":[575,704],"p14_3":[773,773],"p15_0":[1200,652],"p15_1":[433,630],"p15_2":[564,704],"p15_3":[739,946],"p16_0":[1200,799],"p16_1":[1088,1184],"p16_2":[1080,1350],"p16_3":[657,1151],"p16_4":[815,1019],"p17_0":[1200,652],"p17_1":[594,891],"p17_2":[470,704],"p17_3":[773,773],"p18_0":[900,489],"p18_1":[613,840],"p18_2":[799,599],"p18_3":[605,749],"p19_0":[736,401],"p19_1":[735,515],"p19_2":[522,753],"p19_3":[820,1025],"p20_0":[1080,642],"p21_0":[1066,580],"p21_1":[627,940],"p21_2":[687,858],"p21_3":[1000,666],"p22_0":[900,631],"p22_1":[768,1324],"p22_2":[736,401],"p23_0":[729,1093],"p23_1":[714,1071],"p23_2":[1200,652],"p24_0":[904,1205],"p24_1":[634,845],"p24_2":[1199,652],"p24_3":[567,714],"p25_0":[736,401]};
+
+const CITIES=[
+  {n:'Мельбурн',img:'p05_0',t:'Город викторианской архитектуры и колониального наследия, кофейной культуры и гастрономии мирового уровня, контраста классики и стрит-арта, креатива и интеллектуального стиля.',s:'Здесь начинается наш маршрут и задаётся его ритм...'},
+  {n:'Сидней',img:'p17_0',t:'Город света, воды и открытых перспектив, где знаковая архитектура, бухта и океан создают ощущение пространства, свободы и визуальной ясности.',s:'Здесь мы делаем паузу внутри потока природных впечатлений...'},
+  {n:'Брисбен',img:'p24_0',t:'Гостеприимный и тёплый город у реки, где зелёные пространства дарят ощущение спокойствия и завершённости путешествия.',s:'Здесь мы отдыхаем перед возвращением домой...'}
+];
+
+const THEMES=[
+  {h:'Океан как линия движения',img:'p19_0',p:['Великая океанская дорога — <b>одна из самых красивых в мире.</b>','Большой Барьерный риф — <b>крупнейшая живая экосистема планеты.</b>','Пляж Уайтхэвен и остров Гамильтон — <b>расслабленная курортная атмосфера</b> и пляжи с ослепительно белым песком.','Прибрежные маршруты Сиднея, Бондай-Бич и мост над океаном. Ноббис, закаты и драматические пейзажи.']},
+  {h:'Улуру',img:'p02_0',p:['<b>Сакральный центр Австралии</b> — огромный монолит посреди пустоты, незабываемые закаты, бескрайнее звёздное небо и световая инсталляция, где тысячи лампочек превращают <b>ландшафт пустыни в инопланетный.</b>']},
+  {h:'Дикая природа без постановки',img:'p10_1',p:['Морские котики и «пингвиний парад» на острове Филиппа, коалы в эвкалиптовом лесу и кенгуру на пляже.','Воздушная тропа над тропическим лесом в Баддеру, водопады Каррингтон и Белмор — <b>первозданные ландшафты, где человек вторичен.</b>']},
+  {h:'Гедонизм для эстетов',img:'p12_3',p:['Долина реки Ярра — <b>высокая гастрономия</b>, утончённые вина и современное искусство на фоне австралийской Тосканы.','Пенинсула — горячие термальные бассейны под открытым небом, расслабление и <b>восстановление с живописными видами.</b>']}
+];
+
+const CHAPTERS=[
+  {id:'air',num:'Глава I',word:'ВОЗДУХ',img:'p05_0',
+   lead:'Здесь нет плотности и «давления» впечатлений, это движение без напряжения. Всё раскрывается постепенно...',
+   list:['<b>Мельбурн</b> — переулки, кофейни, викторианская архитектура и набережная Ярры, живой и современный город с историческим наследием.','<b>The Great Ocean Road</b> — дорога, где движение вперёд главное впечатление, а пейзаж постоянно меняется.','<b>Скалы Двенадцать апостолов</b> — масштаб, который ощущается физически: только ветер и океан.','<b>Прибрежные леса и серф-пляжи</b> — дикая, подвижная среда, в которой всё живёт и дышит.','<b>Peninsula Hot Springs</b> — тишина и восстановление среди открытых видов.','<b>Yarra Valley</b> — соединение искусства, ландшафта, виноделия и гастрономии в едином пространстве.','<b>The Nobbies</b> — суровое побережье с мощной энергией океана.','<b>Парад пингвинов</b> — наблюдение за природой без вмешательства.'],
+   days:[1,2,3,4,5]},
+  {id:'fire',num:'Глава II',word:'ОГОНЬ',img:'p16_0',
+   lead:'Огни большого города и пылающие закаты Улуру...',
+   list:['Перелёт в центр континента и <b>резкая смена ландшафта</b>','Встреча с <b>Улуру</b> и наблюдение за его изменением на закате и рассвете','<b>Хайкинг</b> внутри Улуру и <b>Ката Тьюты</b>','Знакомство с культурой и верованиями <b>народа Анангу</b>','<b>Ужин под звёздами</b> в пустыне','Посещение инсталляции <b>Field of Light</b>','Возвращение в городскую среду — <b>Сидней</b>','Прогулки по <b>сиднейской бухте</b>','<b>Подъём на мост</b> и панорама города на закате','Вечер в <b>Сиднейской опере</b>','<b>Ночная жизнь</b> города','Поездка по окрестностям: пляжи Bondi и Bronte, прибрежная дорога, <b>природные маршруты</b> и водопады'],
+   close:'Этот отрезок путешествия — про концентрацию и внутреннюю силу. Пространство больше не рассеивает внимание, а собирает его в точку. Здесь движение замедляется, но восприятие становится острее...',
+   days:[6,7,8,9,10]},
+  {id:'water',num:'Глава III',word:'ВОДА',img:'p20_0',
+   lead:'Текучий островной ритм, погружение и бодрящий финал...',
+   list:['<b>Hamilton Island:</b> тропический остров, главный курорт Австралии, прозрачная вода, бухты, лодки и коктейли на закате.','<b>Whitehaven Beach</b> — белоснежный песок и бирюзовые лагуны.','<b>Hill Inlet</b> — хайкинг на смотровую за незабываемым видом.','Морские прогулки, <b>лучшие пляжи</b> и снорклинг.','<b>Большой Барьерный риф:</b> коралловые поля, риф с высоты птичьего полёта и сказочно красивый подводный мир.','<b>Брисбен:</b> река, набережные, мосты и открытые городские пространства. Мягкое завершение путешествия.'],
+   days:[11,12,13,14]}
+];
+
+const DAYS={
+ 1:{t:'Мельбурн',s:'Настраиваемся на путешествие',hero:'p05_0',drive:[30,'км · 36 мин'],
+    mood:'Спокойный вход в путешествие, отдых и акклиматизация.',locs:[],
+    p:['Мельбурн не стремится впечатлить с первого взгляда — он берёт качеством, обволакивает своей безмятежностью. Центр города, набережная Ярры, плотная сеть переулков, где прячутся лучшие кофейни и бары. Прогулка без особой цели и перегрузок, наблюдение за городской жизнью, первая попытка понять этот город, прислушаться к своим ощущениям.','Встречаемся в аэропорту Мельбурна и заселяемся в отель. Лёгкая прогулка по вечернему городу и ужин.'],
+    cards:['p05_1','p05_2','p05_3']},
+ 2:{t:'Мельбурн',s:'Исследуем город',hero:'p06_1',
+    mood:'Заглянуть в прошлое и узнать, чем живёт современная Австралия. Почувствовать уникальную атмосферу Мельбурна и понять, почему он считается культурной столицей страны.',
+    locs:['Royal Exhibition Building','State Library Victoria','Rippon Lea Estate','Fitzroy Gardens','Hosier Lane','AC/DC Lane','Fitzroy','Collingwood','St Kilda'],
+    p:['Мельбурн работает на контрастах. Викторианские аркады с полированными витринами — и через несколько кварталов стены, полностью покрытые уличным искусством. Районы Фицрой и Коллингвуд задают современный тон: галереи, студии, локальные бренды. К финалу дня — Сент-Килда и линия океана, где город выдыхает и становится шире.','Этот день вы проведёте в сопровождении гида, который покажет Мельбурн не как набор достопримечательностей, а как живую культурную систему.'],
+    cards:['p06_0','p06_2','p06_3'],film:{h:'Кадры Мельбурна',imgs:['p07_4','p07_0','p07_3','p07_1','p07_2'],end:'Живая культурная система, а не набор достопримечательностей.'}},
+ 3:{t:'Великая океанская дорога',s:'Дорога как достопримечательность',hero:'p08_0',drive:[406,'км · 6 ч'],
+    mood:'Выехать утром из Мельбурна и отправиться к океану.',
+    locs:['Torquay','Bells Beach','Lorne','Teddy’s Lookout','Apollo Bay','12 Apostles','Gibson Steps','Loch Ard Gorge'],
+    p:['Одна из самых красивых дорог в мире, где каждый поворот — новый кадр.','Безграничные панорамы, пляжи, океан, коалы в дикой природе, ветер в лицо — и как финал, фигурные скалы «Двенадцать апостолов» на закате.','Это не просто переезд, а самостоятельный опыт, где проплывающие за окном виды становятся главным событием. Возвращение в Лорн на ночлег.'],
+    cards:['p08_1','p08_2','p08_3']},
+ 4:{t:'Пенинсула и о. Филиппа',s:'Рукотворная эстетика и дикая природа',hero:'p09_0',drive:[256,'км · 5 ч'],
+    mood:'Суровая и мистическая природа двух островов и животные в дикой природе. Отдых в горячих источниках, парк скульптур, гастрономия и вино, закат, «парад пингвинов».',
+    locs:['Горячие источники Peninsula','Point Leo Estate','The Nobbies','Phillip Island'],
+    p:['Возвращаемся по Великой океанской дороге, чтобы уже к обеду расслабиться в горячих источниках с умиротворяющими видами. Здесь всё работает на восстановление и тишину.','Далее — Point Leo Estate, где винодельня, ресторан и парк скульптуры выстроены как единое визуальное поле: искусство, ландшафт и гастрономия. Наслаждение для эстетов.','К вечеру маршрут резко меняет характер. Ноббис — это ветер, волны и жёсткий ландшафт. Закат на фоне чёрных скал и неспокойного океана выглядит особенно драматично.','После заката — «пингвиний парад» на острове Филиппа. Маленькие пингвины выходят из воды и деловито направляются к своим норам, очень трогательное зрелище.'],
+    cards:['p09_1','p09_2','p09_3'],film:{h:'Океан и острова',imgs:['p10_2','p10_0','p10_3','p10_1','p10_4'],end:'Наблюдение за природой без вмешательства.'}},
+ 5:{t:'Винодельни долины Ярра',s:'Австралийская версия Тосканы',hero:'p11_0',drive:[194,'км · 4 ч'],
+    mood:'Наслаждение холмами, покрытыми виноградниками, современной архитектурой и высокой гастрономией. Длинные обеды, сыры, искусство и дегустации вин у камина. Гедонизм в чистом его проявлении.',
+    locs:['Yering Station','Yarra Valley Dairy','TarraWarra Estate','Levantine Hill Estate','Oakridge Wines','Chandon Australia'],
+    p:['Это день, когда Австралия раскрывается как страна утончённого вкуса и стиля. Мы посетим лучшие и при этом совершенно разные винодельни региона.','Yering Station — классика и ремесло, старейшая винодельня региона (1838 г.). Levantine Hill — дизайнерская интерпретация винодельни. Chandon Australia — французская эстетика и тихая роскошь.','Ужин в Oakridge Wines — одном из лучших ресторанов страны — и как завершение дня бокал игристого на закате.','Ночуем в Мельбурне. Завтра начинается новая глава путешествия — мы летим в самое сердце Австралии.'],
+    cards:['p11_1','p11_2','p11_3'],film:{h:'Вкус долины',imgs:['p12_1','p12_0','p12_4','p12_2'],end:'Гедонизм в чистом его проявлении.'}},
+ 6:{t:'Улуру',s:'Сакральный центр Австралии',hero:'p14_1',
+    mood:'Резкая смена визуального ряда — красная земля и открытый горизонт. Темп замедляется, путешествие становится глубже.',
+    locs:['Uluru','Смотровые площадки','Field of Light'],
+    p:['Мы перелетаем в сердце континента, где открывается другая Австралия — пустынная, мистическая, древняя.','Созерцание здесь становится частью опыта. Наблюдение за солнцем и звёздами — обязательный ритуал, а тишина ощущается физически.','Красный монолит в центре пустыни — не просто природный объект, а священное тело, сакральное пространство для коренного народа анангу, место церемоний и связи с предками.','После перелёта — отдых и постепенное погружение. Закат, ужин под звёздами и Field of Light — тысячи огней, превращающих ночную пустыню в световую инсталляцию. Попробуем уловить магию, царящую здесь.'],
+    cards:['p14_0','p14_2','p14_3']},
+ 7:{t:'Улуру и Ката Тьюта',s:'Культура аборигенов и хайкинг',hero:'p15_0',
+    mood:'Движение внутри ландшафта и постепенное понимание места.',
+    locs:['Uluru','Mala Walk','Mutitjulu Waterhole','Kata Tjuta','Valley of the Winds','Walpa Gorge'],
+    p:['Встретим рассвет в пустыне и понаблюдаем, как монолит меняет цвет с каждым новым лучом солнца.','Хайкинг у подножия Улуру: тропы, пещеры, водоёмы, наскальные рисунки и истории о культуре анангу.','После обеда обходим Ката Тьюту. Это другая форма: не одна скала, а массив, который раскрывается через треки. Долина ветров и Ущелье Уолпа дают разную динамику — от открытого пространства к узким проходам. Тут другая энергия, более дикая и суровая.','Этот день не перегружен событиями, но даёт одно из самых сильных впечатлений всего маршрута.'],
+    cards:['p15_1','p15_2','p15_3'],film:{h:'Красное сердце',imgs:['p16_2','p16_1','p16_3','p16_4','p13_0'],end:'Тишина, которая ощущается физически.'}},
+ 8:{t:'Сидней',s:'Передышка перед новой главой',hero:'p17_0',
+    mood:'Спокойное утро в Улуру и возвращение в привычную цивилизацию.',
+    locs:['Sydney Harbour','Opera House','Circular Quay'],
+    p:['После пустыни Сидней ощущается особенно ярко и современно. Город встречает водой, светом и выразительной архитектурой. Всё кажется живым и динамичным.','Прилетаем в Сидней и отправляемся на вечернюю прогулку. Сидней не требует многого: бухта, Опера и мост сразу собираются в один кадр, которым мы будем наслаждаться за ужином.'],
+    cards:['p17_1','p17_2','p17_3']},
+ 9:{t:'Сидней',s:'Энергия большого города',hero:'p18_0',
+    mood:'Получить максимум впечатлений от этого динамичного города.',
+    locs:['Sydney Opera House','Harbour Bridge','The Rocks','Royal Botanic Garden','Sydney Harbour'],
+    p:['Гуляем по Сиднею. Посетим исторические кварталы и современные пространства, пересечём бухту на пароме, посмотрим на знаменитый театр с разных ракурсов, сходим в Ботанический сад, а на закате поднимемся на один из крупнейших арочных мостов в мире, чтобы увидеть панораму Сиднея.','Вечером, нарядные, устроим поход в Сиднейскую оперу, а после увидим, как город поменяется ближе к ночи, когда откроются самые шумные бары.','Этот день собирает Сидней во всех его проявлениях — всё складывается в единый образ.'],
+    cards:['p18_1','p18_2','p18_3']},
+ 10:{t:'Окрестности Сиднея',s:'Сидней — это не только опера',hero:'p19_0',drive:[333,'км · 6 ч'],
+    mood:'Постепенное возвращение к природе.',
+    locs:['Bondi Beach','Bronte Beach','Sea Cliff Bridge','Kiama','Milton Park'],
+    p:['Садимся в машину и уезжаем из Сиднея на весь день.','Красивейшие пляжи, дорога над океаном, колоритные городки, непроходимый лес с воздушной тропой, два водопада, живописный горный серпантин и вечер в старинной английской усадьбе.'],
+    cards:['p19_3','p19_2','p19_1']},
+ 11:{t:'Остров Гамильтон',s:'Отдыхаем, как австралийцы',hero:'p21_0',
+    mood:'Привыкнуть к теплу и поймать курортное настроение.',
+    locs:['Hamilton Island','Пляжи и смотровые точки'],
+    p:['Прилетаем на остров, пляж и коктейли после заката. Перезагрузка перед новой главой нашего путешествия — встречей с Большим Барьерным рифом.'],
+    cards:['p21_1','p21_2','p21_3']},
+ 12:{t:'Пляж Уайтхейвен',s:'Фантастические цвета',hero:'p22_0',
+    mood:'Насладиться океаном и райскими пляжами на полную катушку.',
+    locs:['Whitehaven Beach','Hill Inlet'],
+    p:['Морская прогулка по живописным лагунам, пляжи с белым песком, снорклинг, хайкинг на смотровую Хилл Инлет.'],
+    cards:['p22_1','p22_2']},
+ 13:{t:'Большой Барьерный риф',s:'Кульминация путешествия',hero:'p23_2',
+    mood:'Понять, насколько огромен Большой Барьерный риф и что это вообще такое.',
+    locs:['Большой Барьерный риф','Коралловые зоны'],
+    p:['Весь день Большой Барьерный риф. Выход в океан и полёт на вертолёте, чтобы оценить масштаб рифа сверху.','Под водой — одна среда: кораллы, движение, цвет, это параллельная вселенная, с воздуха впечатление только усиливается, и ты окончательно влюбляешься в Австралию.'],
+    cards:['p23_0','p23_1']},
+ 14:{t:'Брисбен',s:'Комфортный финал перед дорогой домой',hero:'p24_2',
+    mood:'Новый город и пауза для того, чтобы всем вместе вспомнить и снова пережить опыт предыдущих дней в Австралии.',
+    locs:['South Bank','Brisbane River'],
+    p:['Прогулка по центральному району, набережным и пешеходным мостам. Умиротворяющая водная прогулка на катамаране по реке Брисбен и остановки в очаровательных ресторанчиках города.'],
+    cards:['p24_0','p24_1','p24_3']}
+};
+
+const INCL=[
+  {h:'Логистика и сопровождение',l:['Полное сопровождение и координация путешествия','Встреча в аэропорту и индивидуальные трансферы по маршруту','Все внутренние перелёты по программе','Трансферы аэропорт — отель — аэропорт в каждом городе','Вода для участников']},
+  {h:'Проживание',l:['Проживание в тщательно подобранных отелях (Мельбурн, остров Филиппа, Улуру, Сидней, остров Гамильтон, Брисбен)','Завтраки в отелях']},
+  {h:'Экскурсии и активности',l:['Обзорные экскурсии в Мельбурне и Сиднее','Поездка по легендарной The Great Ocean Road','Посещение острова Филиппа и билеты на «парад пингвинов»','Винодельни и дегустации в Yarra Valley','Билеты в Сиднейскую оперу (по наличию)','Входные билеты в музеи и в национальные парки по программе']},
+  {h:'Улуру',l:['Экскурсия к Улуру и Kata Tjuta с гидом','Рассвет у Улуру (экскурсия)','Пикник на закате у Улуру (с вином и лёгкими закусками)','Ужин под звёздным небом','Field of Light (ночная инсталляция, вход)']},
+  {h:'Океан и риф',l:['Полёт над Большим Барьерным рифом на вертолёте','Морская прогулка к Whitehaven Beach с обедом','Хайкинг на Hill Inlet','Тур на Большой Барьерный риф с обедом и снорклингом','Дайвинг (опционально)']},
+  {h:'Дополнительный опыт',l:['Круиз по реке в Брисбене','Горячие источники Peninsula']}
+];
+const NOT=['Билеты в Австралию','Виза','Обеды и ужины (вне программы)'];
+
+
+
+const $=(s,c=document)=>c.querySelector(s), $$=(s,c=document)=>[...c.querySelectorAll(s)];
+const pad=n=>String(n).padStart(2,'0');
+const CHBG={air:'#E3E7EB',fire:'#EFE1D2',water:'#DEE9E6'};
+const CHACC={air:'#4F6684',fire:'#9C4A26',water:'#2E6A66'};
+const ph=(id,alt,cls='',eager)=>`<figure class="ph ${cls}" data-full="${id}"><img src="img/${id}.webp" width="${SZ[id][0]}" height="${SZ[id][1]}" alt="${alt}" ${eager?'':'loading="lazy"'} decoding="async"></figure>`;
+
+function dayHTML(n,ch){
+  const d=DAYS[n];
+  let h=`<section class="day" data-day="${n}" data-bg="${CHBG[ch.id]}" style="--accent:${CHACC[ch.id]}">
+    <div class="day-hero">${ph(d.hero,d.t)}
+      <div class="day-kick"><span class="pill">День ${n} из 15</span>${d.drive?`<span class="pill">общий перегон ${d.drive[0]} ${d.drive[1]}</span>`:''}</div>
+      <div class="day-num" aria-hidden="true">${pad(n)}</div></div>
+    <div class="wrap day-body">
+      <div><h2 class="dtitle"><span class="line-mask"><span>${d.t}</span></span></h2><p class="dsub" data-r>${d.s}</p>
+        <p class="mood" data-r><small>Настроение дня</small>${d.mood}</p>
+        ${d.locs.length?`<ul class="locs" data-r>${d.locs.map(l=>`<li>${l}</li>`).join('')}</ul>`:''}
+        <div class="prose">${d.p.map(x=>`<p data-r>${x}</p>`).join('')}</div>
+        ${d.drive?`<p class="drive" data-r><b data-count="${d.drive[0]}">0</b>${d.drive[1]} · общий перегон</p>`:''}</div>
+      <div class="collage">${d.cards.map((c,i)=>`<div class="pol" data-i="${i}"><div class="pol-in">${ph(c,d.t)}</div></div>`).join('')}</div>
+    </div></section>`;
+  if(d.film) h+=`<section class="film" data-film data-bg="${CHBG[ch.id]}"><div class="wrap film-head"><div class="label">День ${n} · кадры</div><h3>${d.film.h}</h3></div>
+    <div class="film-track">${d.film.imgs.map(c=>`<figure class="ph" data-full="${c}" style="aspect-ratio:${SZ[c][0]}/${SZ[c][1]}"><img src="img/${c}.webp" alt="${d.film.h}" loading="lazy" decoding="async"></figure>`).join('')}<p class="film-end">${d.film.end}</p></div></section>`;
+  return h;
+}
+
+$('#cities').innerHTML=CITIES.map(c=>`<article class="city" data-r>${ph(c.img,c.n)}<h3>${c.n}</h3><p>${c.t}<em>${c.s}</em></p></article>`).join('');
+$('#stack').insertAdjacentHTML('beforeend',THEMES.map((t,i)=>`<article class="st-card">${ph(t.img,t.h)}<div class="st-in"><div class="st-n">${pad(i+1)}</div><div><h3>${t.h}</h3>${t.p.map(x=>`<p>${x}</p>`).join('')}</div></div></article>`).join(''));
+$('#journey').innerHTML=CHAPTERS.map(c=>`
+  <section class="chapter" id="ch-${c.id}" data-bg="${CHBG[c.id]}">
+    <div class="frame"><img src="img/${c.img}.webp" alt="${c.word}" loading="lazy"></div>
+    <div class="wrap in"><div class="label">${c.num}</div><h2><span class="line-mask"><span>${c.word[0]+c.word.slice(1).toLowerCase()}</span></span></h2></div>
+  </section>
+  <section data-bg="${CHBG[c.id]}" style="--accent:${CHACC[c.id]}"><div class="wrap ch-text"><div><p class="lead" data-r>${c.lead}</p>${c.close?`<p class="close" data-r>${c.close}</p>`:''}</div>
+    <ol>${c.list.map(l=>`<li data-r><span>${l}</span></li>`).join('')}</ol></div></section>
+  ${c.days.map(n=>dayHTML(n,c)).join('')}`).join('')+`
+  <section class="finale" data-day="15" data-bg="#EEE8DF"><div class="bgimg"><img src="img/p25_0.webp" alt="Побережье на рассвете" loading="lazy"></div>
+    <div class="wrap in"><div class="label">День 15 из 15</div><h2><span class="line-mask"><span>Вылет</span></span></h2><p>Дорога домой</p></div></section>`;
+$('#inclGrid').innerHTML=INCL.map(g=>`<div class="grp" data-r><h3>${g.h}</h3><ul>${g.l.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')+`<div class="grp not" data-r><h3>Не включено</h3><ul>${NOT.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+$$('[data-words]').forEach(el=>{el.innerHTML=el.textContent.trim().split(/\s+/).map(w=>`<span class="wd">${w}</span>`).join(' ')});
+
+/* итог по дням */
+const FLY={6:1,8:1,11:1,14:1};
+const SUMCH=[['air','Воздух','дни 1–5','var(--air)'],['fire','Огонь','дни 6–10','var(--fire)'],['water','Вода','дни 11–15','var(--water)']];
+$('#sumCols').innerHTML=SUMCH.map(([id,name,range,col])=>{const ch=CHAPTERS.find(c=>c.id===id);const days=[...ch.days,...(id==='water'?[15]:[])];
+  return `<div class="sum-col" style="--c:${col}"><h4><i></i>${name}<small>${range}</small></h4>${days.map(n=>{const d=n===15?{t:'Вылет',s:'Дорога домой'}:DAYS[n];
+    const tag=FLY[n]?'<span class="tag">перелёт</span>':(d.drive?`<span class="tag">${d.drive[0]} км</span>`:'');
+    return `<div class="sd"><b>${pad(n)}</b><span>${d.t}${tag}</span><em>${d.s}</em></div>`}).join('')}</div>`}).join('');
+
+const gallery=[...new Set($$('[data-full]').map(e=>e.dataset.full))];
+let lbI=0;const lb=$('#lb'),lbImg=$('#lbImg');
+function lbShow(i){lbI=(i+gallery.length)%gallery.length;lbImg.src=`img/${gallery[lbI]}.webp`;$('#lbCount').textContent=`${lbI+1} из ${gallery.length}`;gsap.fromTo(lbImg,{opacity:0,scale:.98},{opacity:1,scale:1,duration:.5,ease:'power2.out'});}
+function lbOpen(id){lbShow(gallery.indexOf(id));lb.classList.add('open');lenis&&lenis.stop();}
+function lbClose(){lb.classList.remove('open');lenis&&lenis.start();}
+document.addEventListener('click',e=>{const m=e.target.closest('[data-full]');if(m&&!m.closest('.st-card'))lbOpen(m.dataset.full);});
+$('#lbClose').onclick=lbClose;$('#lbPrev').onclick=()=>lbShow(lbI-1);$('#lbNext').onclick=()=>lbShow(lbI+1);
+lb.addEventListener('click',e=>{if(e.target===lb)lbClose()});
+document.addEventListener('keydown',e=>{if(!lb.classList.contains('open'))return;if(e.key==='Escape')lbClose();if(e.key==='ArrowLeft')lbShow(lbI-1);if(e.key==='ArrowRight')lbShow(lbI+1);});
+
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const mobile=()=>innerWidth<=900;
+gsap.registerPlugin(ScrollTrigger);
+let lenis=null;
+if(!reduce){lenis=new Lenis({lerp:.085});lenis.on('scroll',ScrollTrigger.update);gsap.ticker.add(t=>lenis.raf(t*1000));gsap.ticker.lagSmoothing(0);}
+$('#toTop').onclick=()=>lenis?lenis.scrollTo(0,{duration:2}):scrollTo({top:0,behavior:'smooth'});
+$$('.top nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=$(a.getAttribute('href'));lenis?lenis.scrollTo(t,{duration:1.6}):t.scrollIntoView({behavior:'smooth'});}));
+const EASE='expo.out';
+
+function init(){
+  const top=$('#top'),hm=$('#heroMedia');
+  let heroP=0;
+  ScrollTrigger.create({start:0,end:'max',onUpdate:()=>{let dark=heroP>.45;$$('#route,.chapter,.finale,.day-hero').forEach(z=>{const r=z.getBoundingClientRect();if(r.top<=40&&r.bottom>40)dark=true;});
+    top.classList.toggle('on-dark',dark);top.classList.toggle('solid',!dark&&scrollY>40);}});
+
+  if(reduce){hm.style.clipPath='inset(0 0 0 0)';hm.style.setProperty('--sh',1);$('#heroIn').style.color='#fff';$$('[data-count]').forEach(e=>e.textContent=e.dataset.count);return initMap();}
+
+  /* 1. первый экран: окно раскрывается во весь экран, карточки разлетаются, текст становится белым поверх фото */
+  gsap.fromTo(hm,{clipPath:'inset(50% 50% 50% 50% round 18px)'},{clipPath:mobile()?'inset(12% 14% 40% 14% round 18px)':'inset(11% 33% 33% 33% round 18px)',duration:1.6,ease:EASE,delay:.1});
+  gsap.fromTo('.hero-side',{opacity:0,x:0,rotation:0},{opacity:1,x:i=>(i?1:-1)*(mobile()?innerWidth*.3:innerWidth*.22),rotation:i=>i?6:-6,duration:1.6,ease:EASE,delay:.2});
+  gsap.from('.hero h1 .line-mask>span',{yPercent:105,duration:1.4,ease:EASE,delay:.35});
+  gsap.from('.hero [data-intro]',{opacity:0,y:16,duration:1.2,ease:EASE,stagger:.1,delay:.6});
+  const ht=gsap.timeline({scrollTrigger:{trigger:'#hero',start:'top top',end:'+=130%',pin:true,scrub:.8,onUpdate:s=>{heroP=s.progress;hm.style.setProperty('--sh',Math.min(1,s.progress*5));}}});
+  ht.to(hm,{clipPath:'inset(0% 0% 0% 0% round 0px)',ease:'none'},0)
+    .to('#heroMedia img',{scale:1,ease:'none'},0)
+    .to('.hero-side.l',{x:-innerWidth*.7,rotation:-14,opacity:0,ease:'none'},0)
+    .to('.hero-side.r',{x:innerWidth*.7,rotation:14,opacity:0,ease:'none'},0)
+    .to('#heroIn',{color:'#fff',ease:'none',duration:.18},.04);
+
+  gsap.to('.intro .wd',{opacity:1,stagger:.08,ease:'none',scrollTrigger:{trigger:'.intro .big',start:'top 80%',end:'bottom 50%',scrub:true}});
+  $$('[data-bg]').forEach(s=>ScrollTrigger.create({trigger:s,start:'top 60%',end:'bottom 60%',onToggle:x=>x.isActive&&gsap.to('body',{backgroundColor:s.dataset.bg,duration:1.2,ease:'power2.out',overwrite:true})}));
+  $$('.city .ph img').forEach(img=>gsap.fromTo(img,{yPercent:-6,scale:1.1},{yPercent:6,scale:1,ease:'none',scrollTrigger:{trigger:img.parentElement,start:'top bottom',end:'bottom top',scrub:true}}));
+
+  /* 2. темы: карточки закрепляются и накладываются */
+  const cards=$$('.st-card');
+  cards.forEach((c,i)=>{gsap.fromTo($('img',c),{scale:1.18},{scale:1,ease:'none',scrollTrigger:{trigger:c,start:'top bottom',end:'top 11%',scrub:true}});
+    if(i<cards.length-1)gsap.to(c,{scale:.9,filter:'brightness(.55)',ease:'none',scrollTrigger:{trigger:cards[i+1],start:'top 75%',end:'top 11%',scrub:true}});});
+
+  /* 3. главы: рамка раскрывается во весь экран, слово поднимается */
+  $$('.chapter').forEach(c=>{const tl=gsap.timeline({scrollTrigger:{trigger:c,start:'top top',end:'+=110%',pin:true,scrub:.8}});
+    tl.fromTo($('.frame',c),{clipPath:mobile()?'inset(12% 8% 22% 8% round 18px)':'inset(14% 22% 14% 22% round 22px)'},{clipPath:'inset(0% 0% 0% 0% round 0px)',ease:'none'},0)
+      .fromTo($('.frame img',c),{scale:1.25},{scale:1,ease:'none'},0)
+      .fromTo($('h2 .line-mask>span',c),{yPercent:105},{yPercent:0,ease:'power2.out',duration:.45},.3)
+      .fromTo($('.label',c),{opacity:0},{opacity:1,duration:.3},.3);});
+
+  /* 4. дни: фото раскрывается из рамки, параллакс внутри, номер дня проплывает, полароиды въезжают */
+  $$('.day').forEach(day=>{const hero=$('.day-hero',day),p=$('.ph',hero),img=$('img',p),num=$('.day-num',day);
+    gsap.fromTo(p,{clipPath:mobile()?'inset(8% 4% 8% 4% round 16px)':'inset(10% 7% 10% 7% round 22px)'},{clipPath:'inset(0% 0% 0% 0% round 0px)',ease:'none',scrollTrigger:{trigger:hero,start:'top 85%',end:'top 5%',scrub:.6}});
+    gsap.fromTo(img,{yPercent:-7},{yPercent:7,ease:'none',scrollTrigger:{trigger:hero,start:'top bottom',end:'bottom top',scrub:true}});
+    gsap.fromTo(num,{xPercent:20},{xPercent:-14,ease:'none',scrollTrigger:{trigger:hero,start:'top bottom',end:'bottom top',scrub:true}});
+    gsap.from($('.day-kick',day).children,{opacity:0,y:16,stagger:.1,duration:1,ease:EASE,scrollTrigger:{trigger:hero,start:'top 55%',once:true}});
+    gsap.from($('.dtitle .line-mask>span',day),{yPercent:105,duration:1.2,ease:EASE,scrollTrigger:{trigger:$('.dtitle',day),start:'top 88%',once:true}});
+    $$('.pol',day).forEach((c,i)=>{const r=[-6,5,-3][i]||3;c.style.setProperty('--r',r);
+      gsap.fromTo(c,{x:(i%2?1:-1)*(mobile()?90:230),rotation:r*3,opacity:0},{x:0,rotation:r,opacity:1,duration:1.4,ease:EASE,delay:i*.12,scrollTrigger:{trigger:$('.collage',day),start:'top 82%',once:true}});
+      gsap.to(c,{y:(i-1)*-40,ease:'none',scrollTrigger:{trigger:$('.collage',day),start:'top bottom',end:'bottom top',scrub:true}});});
+  });
+
+  /* 5. кадры: горизонтальная лента, снимки плывут с разной скоростью */
+  ScrollTrigger.matchMedia({'(min-width: 901px)':()=>{$$('[data-film]').forEach(f=>{const tr=$('.film-track',f);const dist=()=>Math.max(0,tr.scrollWidth-innerWidth);
+    gsap.to(tr,{x:()=>-dist(),ease:'none',scrollTrigger:{trigger:f,start:'top top',end:()=>'+='+dist(),pin:true,scrub:.7,invalidateOnRefresh:true}});
+    $$('.ph',tr).forEach((m,i)=>gsap.fromTo(m,{y:i%2?50:-30},{y:i%2?-50:30,ease:'none',scrollTrigger:{trigger:f,start:'top top',end:()=>'+='+dist(),scrub:true}}));
+    $$('img',tr).forEach(im=>gsap.fromTo(im,{xPercent:-6},{xPercent:6,ease:'none',scrollTrigger:{trigger:f,start:'top top',end:()=>'+='+dist(),scrub:true}}));});}});
+
+  gsap.fromTo('.finale .bgimg img',{scale:1.2},{scale:1,ease:'none',scrollTrigger:{trigger:'.finale',start:'top bottom',end:'bottom bottom',scrub:true}});
+  gsap.from('.finale .line-mask>span',{yPercent:105,duration:1.4,ease:EASE,scrollTrigger:{trigger:'.finale',start:'top 30%',once:true}});
+
+  initMap();
+
+  gsap.set('main [data-r]',{opacity:0,y:20});
+  ScrollTrigger.batch('main [data-r]',{start:'top 92%',once:true,onEnter:els=>{const vis=els.filter(e=>e.getBoundingClientRect().top<innerHeight);gsap.set(els.filter(e=>!vis.includes(e)),{opacity:1,y:0});
+    gsap.to(vis,{opacity:1,y:0,duration:1.1,ease:EASE,stagger:Math.min(.06,.45/Math.max(vis.length,1))});}});
+  $$('[data-count]').forEach(el=>ScrollTrigger.create({trigger:el,start:'top 92%',once:true,onEnter:()=>{const o={v:0};gsap.to(o,{v:+el.dataset.count,duration:1.6,ease:'power2.out',onUpdate:()=>el.textContent=Math.round(o.v)})}}));
+  const hud=$('#hudDay');
+  $$('[data-day]').forEach(d=>ScrollTrigger.create({trigger:d,start:'top 50%',end:'bottom 50%',onToggle:x=>x.isActive&&(hud.textContent=`день ${d.dataset.day} из 15`)}));
+  ScrollTrigger.create({trigger:'#journey',start:'top 50%',onLeaveBack:()=>hud.textContent='июль 2026'});
+
+  const order=new Map($$('*').map((e,i)=>[e,i]));const pos=st=>st.trigger&&order.has(st.trigger)?order.get(st.trigger):1e9;
+  ScrollTrigger.sort((a,b)=>pos(a)-pos(b)||a.start-b.start);ScrollTrigger.refresh();
+  let t;$$('img[loading="lazy"]').forEach(i=>i.addEventListener('load',()=>{clearTimeout(t);t=setTimeout(()=>ScrollTrigger.refresh(),300)},{once:true}));
+}
+
+/* ============ 3D-карта: глобус → спутник и рельеф, камера летит по маршруту ============ */
+function initMap(){
+  const P={mel:[144.963,-37.814],tor:[144.326,-38.331],lor:[143.977,-38.541],apo:[143.104,-38.666],gee:[144.36,-38.15],qcl:[144.66,-38.27],sor:[144.74,-38.34],fin:[144.88,-38.43],leo:[145.07,-38.42],phi:[145.16,-38.51],yar:[145.43,-37.67],
+    ulu:[131.036,-25.345],kat:[130.736,-25.30],syd:[151.209,-33.868],bon:[151.27,-33.89],scb:[150.97,-34.25],kia:[150.86,-34.67],bud:[150.69,-34.62],mil:[150.41,-34.48],
+    ham:[148.958,-20.35],wha:[149.04,-20.28],hil:[149.04,-20.24],reef:[149.95,-19.76],bri:[153.026,-27.47]};
+  // плавная линия по точкам (Catmull-Rom) и дуга перелёта
+  const smooth=keys=>{const pts=keys.map(k=>P[k]);const out=[];for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+      for(let t=0;t<1;t+=.1){const t2=t*t,t3=t2*t;out.push([0,1].map(j=>.5*((2*p1[j])+(-p0[j]+p2[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*t3)));}}
+    out.push(pts[pts.length-1]);return out;};
+  const arc=(a,b,h)=>{const A=P[a],B=P[b],out=[];const nx=-(B[1]-A[1]),ny=B[0]-A[0];for(let i=0;i<=60;i++){const t=i/60,k=Math.sin(Math.PI*t)*h;out.push([A[0]+(B[0]-A[0])*t+nx*k,A[1]+(B[1]-A[1])*t+ny*k]);}return out;};
+  const SEG=[
+    {c:smooth(['mel','gee','tor','lor','apo','lor']),t:[.15,.25]},{c:smooth(['lor','tor','gee','qcl','sor','fin','leo','phi']),t:[.26,.31]},{c:smooth(['phi','yar','mel']),t:[.32,.36]},
+    {c:arc('mel','ulu',-.12),t:[.37,.46],fly:1},{c:smooth(['ulu','kat','ulu']),t:[.49,.54]},{c:arc('ulu','syd',-.1),t:[.55,.63],fly:1},
+    {c:smooth(['syd','bon','scb','kia','bud','mil','syd']),t:[.64,.70]},{c:arc('syd','ham',.12),t:[.71,.79],fly:1},{c:smooth(['ham','wha','hil','ham']),t:[.80,.84]},
+    {c:arc('ham','reef',-.25),t:[.84,.87],fly:1},{c:arc('ham','bri',.14),t:[.88,.94],fly:1}];
+  const CAM=[
+    {t:0,c:[118,-12],z:1.25,p:0,b:0},{t:.1,c:[134,-27.5],z:3.25,p:15,b:0},
+    {t:.18,c:[144.1,-38.25],z:7.6,p:58,b:-18},{t:.28,c:[144.85,-38.35],z:8.3,p:60,b:8},{t:.35,c:[145.2,-37.95],z:8.1,p:56,b:18},
+    {t:.43,c:[138,-31],z:4.2,p:30,b:0},{t:.52,c:[130.93,-25.36],z:11.4,p:70,b:38},{t:.6,c:[141,-29.5],z:4.4,p:28,b:0},
+    {t:.68,c:[150.8,-34.18],z:8.6,p:58,b:-12},{t:.76,c:[150,-27],z:4.6,p:28,b:0},{t:.83,c:[149.03,-20.27],z:10.8,p:58,b:-22},
+    {t:.88,c:[149.6,-19.95],z:8.9,p:48,b:-8},{t:.94,c:[153.0,-27.47],z:9.4,p:52,b:0},{t:1,c:mobile()?[136,-27.5]:[150.5,-27.5],z:mobile()?2.8:3.3,p:18,b:0}];
+  const STEPS=[[0,'Австралия','Шесть точек на карте','Мельбурн — Великая океанская дорога — Улуру — Сидней — острова Кораллового моря — Брисбен.'],
+    [.15,'Дни 1–3',DAYS[3].t,DAYS[3].s],[.26,'День 4',DAYS[4].t,DAYS[4].s],[.32,'День 5',DAYS[5].t,DAYS[5].s],[.37,'День 6',DAYS[6].t,DAYS[6].s],[.48,'День 7',DAYS[7].t,DAYS[7].s],
+    [.55,'Дни 8–9',DAYS[9].t,DAYS[9].s],[.64,'День 10',DAYS[10].t,DAYS[10].s],[.71,'День 11',DAYS[11].t,DAYS[11].s],[.8,'Дни 12–13','Уайтхейвен и Большой Барьерный риф',DAYS[13].s],
+    [.88,'День 14',DAYS[14].t,DAYS[14].s],[.94,'День 15','Весь маршрут','Пятнадцать дней, три стихии, четыре перелёта и 1 219 км по дорогам.']];
+  const PINS=[['mel','Мельбурн',.15],['apo','12 апостолов',.22],['phi','о. Филиппа',.31],['yar','Долина Ярра',.35],['ulu','Улуру',.46],['kat','Ката Тьюта',.52],['syd','Сидней',.63],['kia','Киама',.68],['ham','о. Гамильтон',.79],['wha','Уайтхейвен',.83],['reef','Риф',.87],['bri','Брисбен',.94]];
+  $('#dots').innerHTML=STEPS.map(()=>'<i><b></b></i>').join('');
+
+  let map=null,ready=false,cur=0,target=0;
+  function create(){
+    if(map)return;
+    map=new maplibregl.Map({container:'mapCanvas',interactive:false,attributionControl:{compact:true},center:CAM[0].c,zoom:CAM[0].z,pitch:0,maxPitch:75,fadeDuration:0,
+      style:{version:8,projection:{type:'globe'},
+        sources:{
+          sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Снимки © Esri, Maxar, Earthstar Geographics'},
+          dem:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:13,attribution:'Рельеф © Mapzen, AWS'},
+          hs:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:13}},
+        layers:[{id:'bg',type:'background',paint:{'background-color':'#0E1316'}},
+          {id:'sat',type:'raster',source:'sat',paint:{'raster-saturation':-.12,'raster-contrast':.06,'raster-brightness-max':.96,'raster-fade-duration':0}},
+          {id:'hs',type:'hillshade',source:'hs',paint:{'hillshade-exaggeration':.22,'hillshade-shadow-color':'rgba(0,0,0,.6)','hillshade-highlight-color':'rgba(255,255,255,.25)'}}],
+        terrain:{source:'dem',exaggeration:1.5},
+        sky:{'sky-color':'#0E1316','horizon-color':'#cfdde2','fog-color':'#cfdde2','sky-horizon-blend':.6,'horizon-fog-blend':.5,'fog-ground-blend':.2,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,5,1,8,0]}}});
+    map.on('load',()=>{
+      SEG.forEach((s,i)=>{map.addSource('s'+i,{type:'geojson',lineMetrics:true,data:{type:'Feature',geometry:{type:'LineString',coordinates:s.c}}});
+        map.addLayer({id:'g'+i,type:'line',source:'s'+i,layout:{'line-cap':'round','line-join':'round',visibility:'none'},paint:{'line-width':s.fly?6:9,'line-blur':6,'line-opacity':.38,'line-gradient':['interpolate',['linear'],['line-progress'],0,'#F2C98A',1,'#F2C98A']}});
+        map.addLayer({id:'l'+i,type:'line',source:'s'+i,layout:{'line-cap':'round','line-join':'round',visibility:'none'},paint:{'line-width':s.fly?1.6:3,'line-gradient':['interpolate',['linear'],['line-progress'],0,'#FFF3DC',1,'#FFF3DC']}});});
+      PINS.forEach(p=>{const el=document.createElement('div');el.className='pin';el.innerHTML=`<i></i>${p[1]}`;p.el=el;new maplibregl.Marker({element:el,anchor:'left',offset:[-4,0]}).setLngLat(P[p[0]]).addTo(map);});
+      ready=true;apply(cur);
+    });
+  }
+  const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  let lastStep=-1;
+  function apply(t){
+    // карточка с днём
+    let si=0;STEPS.forEach((s,j)=>{if(t>=s[0]-.001)si=j});
+    if(si!==lastStep){lastStep=si;const s=STEPS[si],els=['#mapDay','#mapTitle','#mapText'];gsap.killTweensOf(els);
+      gsap.to(els,{opacity:0,y:-6,duration:.18,onComplete:()=>{$('#mapDay').textContent=s[1];$('#mapTitle').textContent=s[2];$('#mapText').textContent=s[3];gsap.fromTo(els,{y:8},{opacity:1,y:0,duration:.45,ease:'power2.out',stagger:.04});}});}
+    $$('#dots b').forEach((b,j)=>{const a=STEPS[j][0],z=(STEPS[j+1]||[1])[0];b.style.transform=`scaleX(${Math.max(0,Math.min(1,(t-a)/(z-a)))})`;});
+    $('#mapIntro').style.opacity=Math.max(0,1-t*12);
+    const sv=Math.max(0,Math.min(1,(t-.95)/.04));const sm=$('#sum');sm.style.opacity=sv;sm.style.transform=`translateY(${(1-sv)*24}px)`;sm.style.pointerEvents=sv>.5?'auto':'none';$('.map .card').style.opacity=1-sv;
+    if(!ready)return;
+    // камера между ключевыми кадрами
+    let i=0;while(i<CAM.length-2&&t>CAM[i+1].t)i++;
+    const A=CAM[i],B=CAM[i+1],k=ease(Math.max(0,Math.min(1,(t-A.t)/(B.t-A.t))));
+    // зум сначала отъезжает, потом подъезжает — как пролёт
+    const zm=lerp(A.z,B.z,k)-Math.sin(Math.PI*k)*Math.max(0,Math.min(A.z,B.z)>6?1.2:0);
+    map.jumpTo({center:[lerp(A.c[0],B.c[0],k),lerp(A.c[1],B.c[1],k)],zoom:zm,pitch:lerp(A.p,B.p,k),bearing:lerp(A.b,B.b,k)});
+    // маршрут прорисовывается
+    SEG.forEach((s,j)=>{const p=Math.max(0,Math.min(1,(t-s.t[0])/(s.t[1]-s.t[0])));
+      const vis=p>0?'visible':'none';map.setLayoutProperty('l'+j,'visibility',vis);map.setLayoutProperty('g'+j,'visibility',vis);
+      if(p>0){const st=c=>p>=1?['interpolate',['linear'],['line-progress'],0,''+c+'',1,''+c+'']:['step',['line-progress'],c,p,'rgba(0,0,0,0)'];
+        map.setPaintProperty('l'+j,'line-gradient',st('#FFF3DC'));map.setPaintProperty('g'+j,'line-gradient',st('#F2C98A'));}});
+    const svv=Math.max(0,Math.min(1,(t-.95)/.04));PINS.forEach(p=>p.el&&p.el.classList.toggle('on',t>=p[2]&&svv<.4));
+  }
+  // плавное следование за прокруткой
+  gsap.ticker.add(()=>{if(Math.abs(target-cur)<.0002)return;cur+=(target-cur)*.09;apply(cur);});
+  ScrollTrigger.create({trigger:'#route',start:'top bottom+=600',once:true,onEnter:create});
+  ScrollTrigger.create({trigger:'#route',start:'top top',end:()=>'+='+(mobile()?3600:4800),pin:true,onUpdate:s=>{target=s.progress;}});
+  if(reduce){create();target=cur=1;}
+}
+
+
+init();
+</script>
+</body>
+</html>
