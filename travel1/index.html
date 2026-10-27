@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="ru" data-theme="night">
+<head>
+<meta charset="utf-8">
+<base href="/travel1/">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Австралия · Три стихии</title>
+<meta name="description" content="Австралия. Три стихии. Июль 2026 — путешествие по континенту как смена состояний: воздух, огонь, вода.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700;900&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#0D0B0A; --fg:#F2EBE1; --muted:rgba(242,235,225,.55); --line:rgba(242,235,225,.16); --accent:#FF6A3D;
+  --red:#D7262B; --paper:#FBF8F2;
+  --display:'Unbounded',system-ui,sans-serif; --serif:'Cormorant Garamond',Georgia,serif; --sans:'Manrope',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --gut:clamp(16px,4vw,56px);
+}
+html[data-theme="air"]  {--bg:#E3E1EA;--fg:#1C1A2A;--muted:rgba(28,26,42,.58);--line:rgba(28,26,42,.14);--accent:#5A4FD0}
+html[data-theme="fire"] {--bg:#1D0A05;--fg:#F8E7D8;--muted:rgba(248,231,216,.6);--line:rgba(248,231,216,.15);--accent:#FF5A1F}
+html[data-theme="water"]{--bg:#DDF1EE;--fg:#07303A;--muted:rgba(7,48,58,.6);--line:rgba(7,48,58,.14);--accent:#008C83}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;overflow-x:clip}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:clamp(15px,1.05vw,17px);line-height:1.6;
+  transition:background-color 1.1s var(--ease),color 1.1s var(--ease);overflow-x:clip;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::selection{background:var(--accent);color:#fff}
+.is-loading{overflow:hidden}
+
+/* ---------- grain + particles ---------- */
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:90;opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1s steps(4) infinite}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}}
+main{position:relative;z-index:2}
+
+/* ---------- preloader ---------- */
+.loader{position:fixed;inset:0;z-index:100;background:#0D0B0A;color:#F2EBE1;display:grid;place-items:center}
+.loader-inner{text-align:center}
+.loader-count{font-family:var(--display);font-weight:900;font-size:clamp(90px,22vw,300px);line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.loader-label{font-family:var(--display);font-weight:300;letter-spacing:.5em;font-size:11px;text-transform:uppercase;opacity:.6;margin-top:18px}
+.loader-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#FF6A3D;transform-origin:left;transform:scaleX(0)}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;left:0;right:0;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
+  padding:18px var(--gut);font-family:var(--display);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:#fff;mix-blend-mode:difference;pointer-events:none}
+.hud b{font-weight:700}
+.hud .hud-ch{position:absolute;left:50%;transform:translateX(-50%);opacity:.9;white-space:nowrap}
+.hud .hud-day{font-variant-numeric:tabular-nums}
+.hud span{display:inline-block}
+.progress{position:fixed;left:0;bottom:0;height:2px;width:100%;z-index:50;background:var(--accent);transform-origin:left;transform:scaleX(0);transition:background-color 1s}
+
+/* ---------- cursor ---------- */
+.cursor,.cursor-dot{position:fixed;left:0;top:0;pointer-events:none;z-index:95;border-radius:50%;display:none}
+@media (pointer:fine){.cursor,.cursor-dot{display:block}}
+.cursor{width:38px;height:38px;margin:-19px 0 0 -19px;border:1px solid #fff;mix-blend-mode:difference;display:grid;place-items:center;
+  transition:width .45s var(--ease),height .45s var(--ease),margin .45s var(--ease),background-color .45s}
+.cursor span{font-family:var(--display);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#000;opacity:0;transition:opacity .3s}
+.cursor.view{width:96px;height:96px;margin:-48px 0 0 -48px;background:#fff}
+.cursor.view span{opacity:1}
+.cursor-dot{width:5px;height:5px;margin:-2.5px 0 0 -2.5px;background:#fff;mix-blend-mode:difference}
+
+/* ---------- shared ---------- */
+.eyebrow{font-family:var(--display);font-size:11px;font-weight:500;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);transition:color 1s}
+.ch{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.06em;margin-bottom:-.06em}
+.ch>span{display:inline-block;will-change:transform}
+.w{display:inline-block;white-space:nowrap}
+.wrap{padding:0 var(--gut)}
+.ph{position:relative;overflow:hidden;cursor:zoom-in}
+.ph img{width:100%;height:100%;object-fit:cover}
+
+/* ---------- hero ---------- */
+.hero{position:relative;height:100vh;height:100svh;overflow:hidden;background:#0D0B0A;color:#F2EBE1}
+.hero-media{position:absolute;inset:0;clip-path:inset(50% 50% 50% 50% round 18px);will-change:clip-path}
+.hero-media picture{display:block;width:100%;height:100%}
+.hero-media img{width:100%;height:100%;object-fit:cover;transform:scale(1.3)}
+.hero-media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,11,10,.25),rgba(13,11,10,0) 30%,rgba(13,11,10,.55))}
+.hero-side{position:absolute;top:50%;width:clamp(120px,17vw,260px);aspect-ratio:3/4;margin-top:calc(clamp(120px,17vw,260px) * -.666);overflow:hidden;border-radius:14px;opacity:0}
+.hero-side img{width:100%;height:100%;object-fit:cover}
+.hero-side.l{left:50%;margin-left:calc(clamp(120px,17vw,260px) * -.5)}
+.hero-side.r{left:50%;margin-left:calc(clamp(120px,17vw,260px) * -.5)}
+.hero-title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;mix-blend-mode:difference;color:#fff}
+.hero-title h1{font-family:var(--display);font-weight:900;font-size:clamp(40px,10.6vw,200px);line-height:.9;letter-spacing:-.035em;white-space:nowrap}
+.hero-sub{margin-top:clamp(14px,2vw,28px);font-family:var(--display);font-weight:300;font-size:clamp(11px,1.15vw,16px);letter-spacing:.55em;text-transform:uppercase;padding-left:.55em}
+.hero-foot{position:absolute;left:0;right:0;bottom:22px;padding:0 var(--gut);display:flex;justify-content:space-between;align-items:end;
+  font-family:var(--display);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:#F2EBE1}
+.scroll-hint{display:flex;align-items:center;gap:12px}
+.scroll-hint i{display:block;width:1px;height:46px;background:currentColor;transform-origin:top;animation:hint 2.2s var(--ease) infinite}
+@keyframes hint{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- manifesto ---------- */
+.manifesto{padding:clamp(110px,18vh,220px) var(--gut) clamp(80px,12vh,160px);max-width:1500px;margin:0 auto}
+.manifesto .eyebrow{margin-bottom:34px}
+.manifesto p.big{font-family:var(--display);font-weight:500;font-size:clamp(24px,4.1vw,64px);line-height:1.12;letter-spacing:-.02em;text-transform:uppercase}
+.manifesto p.big .wd{opacity:.13;transition:none}
+
+/* ---------- cities ---------- */
+.cities{padding:clamp(40px,8vh,90px) 0 clamp(80px,14vh,170px);position:relative}
+.cities-head{display:flex;justify-content:space-between;align-items:end;gap:30px;padding:0 var(--gut) 34px;flex-wrap:wrap}
+.cities-head h2{font-family:var(--display);font-weight:700;font-size:clamp(18px,1.9vw,28px);letter-spacing:.02em;text-transform:uppercase;max-width:14em;line-height:1.15}
+.city{position:relative;display:grid;grid-template-columns:60px auto minmax(240px,1fr);gap:clamp(16px,3vw,48px);align-items:center;padding:clamp(22px,3.4vw,46px) var(--gut);border-top:1px solid var(--line);transition:border-color 1s}
+.city:last-child{border-bottom:1px solid var(--line)}
+.city-n{font-family:var(--display);font-size:12px;letter-spacing:.2em;color:var(--muted)}
+.city-name{font-family:var(--display);font-weight:900;font-size:clamp(40px,7.4vw,128px);line-height:.9;letter-spacing:-.04em;text-transform:uppercase;transition:translate .7s var(--ease),color .5s}
+.city-text{color:var(--muted);max-width:34em;transition:color 1s}
+.city-text strong{display:block;color:var(--fg);font-weight:500;font-family:var(--serif);font-style:italic;font-size:1.45em;line-height:1.25;margin-top:12px}
+.city-mob{display:none}
+.city-float{position:fixed;left:0;top:0;width:clamp(220px,22vw,360px);aspect-ratio:4/5;pointer-events:none;z-index:40;overflow:hidden;border-radius:12px;opacity:0;transform:scale(.6)}
+.city-float img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s}
+.city-float img.on{opacity:1}
+@media (hover:hover) and (pointer:fine){.city:hover .city-name{translate:24px 0;color:var(--accent)}}
+
+/* ---------- stacked themes ---------- */
+.stack{padding:0 var(--gut) clamp(60px,10vh,120px)}
+.stack-head{max-width:1500px;margin:0 auto 40px}
+.st-card{position:sticky;top:12vh;height:76vh;min-height:460px;margin:0 auto 34vh;}
+.st-card:last-child{margin-bottom:6vh;}
+.st-card{max-width:1500px;border-radius:clamp(16px,2vw,28px);overflow:hidden;color:#fff;transform-origin:50% 0;will-change:transform}
+.st-card .ph{position:absolute;inset:0;cursor:inherit}
+.st-card .ph img{transform:scale(1.15)}
+.st-card::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.66),rgba(0,0,0,.08) 70%);pointer-events:none}
+.st-in{position:absolute;inset:auto 0 0 0;z-index:2;padding:clamp(24px,4vw,64px);display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,4vw,64px);align-items:end}
+.st-n{font-family:var(--display);font-weight:900;font-size:clamp(70px,13vw,210px);line-height:.8;letter-spacing:-.05em;-webkit-text-stroke:1.5px rgba(255,255,255,.85);color:transparent}
+.st-card h3{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.6vw,58px);line-height:1;text-transform:uppercase;letter-spacing:-.02em;margin-bottom:18px}
+.st-card p{max-width:38em;font-size:clamp(14px,1.1vw,17px);opacity:.92;margin-top:6px}
+.st-card p b{font-weight:700}
+
+/* ---------- map ---------- */
+.map{position:relative;height:100vh;height:100svh;overflow:hidden}
+.map-grid{height:100%;display:grid;grid-template-columns:1.35fr 1fr;align-items:center;gap:clamp(20px,4vw,70px);padding:70px var(--gut) 40px}
+.map svg{width:100%;height:auto;max-height:82vh;overflow:visible}
+.map .land{fill:var(--fg);fill-opacity:.06;stroke:var(--fg);stroke-opacity:.5;stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-linejoin:round;transition:fill 1s,stroke 1s}
+.map .route{fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.map .route.fly{stroke-dasharray:2 7;stroke-width:2.2;vector-effect:non-scaling-stroke}
+.map .mask-path{fill:none;stroke:#fff;stroke-width:14;stroke-linecap:round}
+.map .dot{fill:var(--accent);transform-box:fill-box;transform-origin:center}
+.map .halo{fill:none;stroke:var(--accent);vector-effect:non-scaling-stroke;stroke-width:1.2;transform-box:fill-box;transform-origin:center}
+.map text{fill:var(--fg);font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;paint-order:stroke;stroke:var(--bg);stroke-width:.25em;stroke-linejoin:round}
+.map-side h2{font-family:var(--display);font-weight:900;font-size:clamp(30px,4.6vw,76px);line-height:.92;letter-spacing:-.03em;text-transform:uppercase;margin:16px 0 28px}
+.stops{list-style:none;border-top:1px solid var(--line)}
+.stops li{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);font-family:var(--display);font-size:clamp(12px,1vw,14px);letter-spacing:.06em;text-transform:uppercase;opacity:.28;transition:opacity .5s,color .5s,padding .5s var(--ease)}
+.stops li span:last-child{color:var(--muted);font-weight:300}
+.stops li.on{opacity:1}
+.stops li.now{color:var(--accent);padding-left:14px}
+.stats{display:flex;gap:clamp(18px,3vw,44px);margin-top:28px;flex-wrap:wrap}
+.stat b{display:block;font-family:var(--display);font-weight:900;font-size:clamp(28px,3vw,48px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+
+/* ---------- chapter ---------- */
+.chapter-pin{position:relative;height:100vh;height:100svh;overflow:hidden;background:#000}
+.chapter-pin .ph{position:absolute;inset:0;clip-path:circle(9% at 50% 50%);cursor:inherit;will-change:clip-path}
+.chapter-pin .ph img{transform:scale(1.35)}
+.chapter-pin .ph::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.25)}
+.chapter-word{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;mix-blend-mode:difference;pointer-events:none;z-index:2}
+.chapter-word .num{font-family:var(--display);font-size:12px;letter-spacing:.5em;text-transform:uppercase;margin-bottom:18px}
+.chapter-word h2{font-family:var(--display);font-weight:900;font-size:clamp(54px,15vw,260px);line-height:.85;letter-spacing:-.04em;white-space:nowrap}
+.chapter-word h2 .lt{display:inline-block}
+.chapter-intro{padding:clamp(80px,14vh,170px) var(--gut);display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,6vw,110px);max-width:1600px;margin:0 auto}
+.chapter-lead{font-family:var(--display);font-weight:500;font-size:clamp(20px,2.5vw,40px);line-height:1.15;letter-spacing:-.01em;text-transform:uppercase;color:var(--accent);transition:color 1s}
+.chapter-close{margin-top:40px;font-family:var(--serif);font-style:italic;font-size:clamp(22px,2.2vw,34px);line-height:1.25}
+.chapter-list{list-style:none;counter-reset:li}
+.chapter-list li{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:16px 0;border-bottom:1px solid var(--line);transition:border-color 1s}
+.chapter-list li::before{counter-increment:li;content:counter(li,decimal-leading-zero);font-family:var(--display);font-size:11px;color:var(--muted);padding-top:5px}
+.chapter-list b{font-weight:700}
+
+/* ---------- day ---------- */
+.day{position:relative;padding-bottom:clamp(70px,13vh,170px)}
+.day-hero{position:relative;height:88vh;height:88svh;min-height:420px}
+.day-hero .ph{position:absolute;inset:0;clip-path:inset(12% 8% 12% 8% round 24px);will-change:clip-path}
+.day-hero .ph img{position:absolute;left:0;top:-12%;height:124%;will-change:transform}
+.day-hero .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.22),transparent 35%,transparent 55%,rgba(0,0,0,.5));pointer-events:none}
+.day-num{position:absolute;right:var(--gut);bottom:-.17em;z-index:3;font-family:var(--display);font-weight:900;font-size:clamp(120px,27vw,460px);line-height:.8;letter-spacing:-.06em;color:transparent;
+  -webkit-text-stroke:2px var(--fg);pointer-events:none;transition:-webkit-text-stroke-color 1s;white-space:nowrap}
+.day-num.fill{-webkit-text-stroke:0;color:var(--accent)}
+.day-kick{position:absolute;left:calc(8% + var(--gut) * .5);top:calc(12% + 22px);z-index:3;color:#fff;font-family:var(--display);font-size:11px;letter-spacing:.3em;text-transform:uppercase;display:flex;gap:18px;flex-wrap:wrap}
+.day-kick .pill{border:1px solid rgba(255,255,255,.55);border-radius:99px;padding:6px 12px;letter-spacing:.14em;backdrop-filter:blur(8px);background:rgba(0,0,0,.12)}
+.day-body{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(30px,5vw,90px);padding:clamp(50px,9vh,110px) var(--gut) 0;max-width:1640px;margin:0 auto}
+.day-title{font-family:var(--display);font-weight:900;font-size:clamp(34px,5.1vw,86px);line-height:.94;letter-spacing:-.035em;text-transform:uppercase}
+.day-sub{margin-top:16px;font-family:var(--display);font-weight:300;font-size:clamp(13px,1.15vw,17px);letter-spacing:.24em;text-transform:uppercase;color:var(--accent);transition:color 1s}
+.mood{margin:clamp(28px,4vh,44px) 0;font-family:var(--serif);font-style:italic;font-size:clamp(22px,2.15vw,34px);line-height:1.22;padding-left:22px;border-left:2px solid var(--accent);transition:border-color 1s}
+.mood small{display:block;font-family:var(--display);font-style:normal;font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.locs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:30px;list-style:none}
+.locs li{border:1px solid var(--line);border-radius:99px;padding:6px 13px;font-size:12.5px;letter-spacing:.02em;transition:border-color 1s,background-color .3s,color .3s}
+.locs li:hover{background:var(--fg);color:var(--bg)}
+.prose p{margin-bottom:1em;max-width:36em}
+.prose p:first-child::first-letter{font-family:var(--display);font-weight:900;float:left;font-size:3.6em;line-height:.85;margin:.06em .1em 0 0;color:var(--accent);transition:color 1s}
+.drive{display:flex;align-items:baseline;gap:10px;margin-top:26px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--display);text-transform:uppercase}
+.drive b{font-weight:900;font-size:clamp(34px,3.6vw,58px);letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1}
+.drive span{font-size:12px;letter-spacing:.18em;color:var(--muted)}
+.collage{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-start;padding-top:20px}
+.card{position:relative;width:clamp(150px,19vw,300px);background:var(--paper);padding:9px 9px 34px;box-shadow:0 30px 60px -20px rgba(0,0,0,.45),0 4px 12px rgba(0,0,0,.12);margin:-12px -18px;will-change:transform;transition:box-shadow .5s var(--ease)}
+.card .ph{width:100%}
+.card:nth-child(2){margin-top:60px;z-index:2}
+.card:nth-child(3){margin-top:-30px}
+.card:nth-child(4){margin-top:-60px}
+.card-in{transition:transform .6s var(--ease)}
+@media (hover:hover){.card:hover{z-index:5}.card:hover .card-in{transform:rotate(calc(var(--r) * -1deg)) scale(1.06)}.card:hover{box-shadow:0 50px 90px -20px rgba(0,0,0,.55)}}
+
+/* ---------- film (horizontal) ---------- */
+.film{position:relative;overflow:hidden}
+.film-head{position:absolute;top:clamp(70px,11vh,110px);left:var(--gut);z-index:2;display:flex;gap:16px;align-items:baseline}
+.film-head h3{font-family:var(--display);font-weight:900;font-size:clamp(22px,2.4vw,38px);letter-spacing:-.02em;text-transform:uppercase}
+.film-track{display:flex;gap:clamp(14px,2vw,28px);align-items:center;height:100vh;height:100svh;padding:clamp(130px,18vh,190px) var(--gut) clamp(40px,8vh,80px);width:max-content}
+.film-track .ph{height:100%;border-radius:clamp(10px,1.2vw,18px);flex:none}
+.film-track .ph:nth-child(even){height:76%}
+.film-track .ph img{height:100%;width:auto;max-width:none;transform:scale(1.15)}
+.film-end{flex:none;width:clamp(200px,24vw,360px);font-family:var(--serif);font-style:italic;font-size:clamp(22px,2vw,32px);line-height:1.2;color:var(--muted)}
+
+/* ---------- finale ---------- */
+.finale{position:relative;height:120vh;overflow:hidden;color:#fff}
+.finale .ph{position:absolute;inset:0;cursor:inherit}
+.finale .ph img{transform:scale(1.25)}
+.finale .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.55))}
+.finale-in{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 var(--gut)}
+.finale .k{font-family:var(--display);font-size:12px;letter-spacing:.45em;text-transform:uppercase;margin-bottom:22px}
+.finale h2{font-family:var(--display);font-weight:900;font-size:clamp(46px,11vw,190px);line-height:.88;letter-spacing:-.045em;text-transform:uppercase}
+.finale p{margin-top:22px;font-family:var(--serif);font-style:italic;font-size:clamp(22px,2.4vw,38px)}
+
+/* ---------- included ---------- */
+.incl{padding:clamp(100px,16vh,190px) var(--gut) clamp(60px,10vh,120px);max-width:1640px;margin:0 auto}
+.incl-head{display:flex;justify-content:space-between;align-items:end;gap:30px;flex-wrap:wrap;margin-bottom:clamp(40px,7vh,80px)}
+.incl-head h2{font-family:var(--display);font-weight:900;font-size:clamp(48px,9vw,160px);line-height:.85;letter-spacing:-.05em;text-transform:uppercase}
+.incl-head h2 em{display:block;font-style:normal;font-weight:300;font-size:.22em;letter-spacing:.3em;color:var(--accent);margin-top:14px}
+.incl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0 clamp(24px,3vw,56px)}
+.grp{padding:26px 0 30px;border-top:1px solid var(--line)}
+.grp h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;display:flex;gap:12px}
+.grp h3 i{font-style:normal;color:var(--accent);font-weight:300}
+.grp ul{list-style:none}
+.grp li{padding:7px 0 7px 22px;position:relative;color:var(--muted);transition:color .3s}
+.grp li::before{content:"";position:absolute;left:0;top:.95em;width:10px;height:1px;background:var(--accent)}
+.grp li:hover{color:var(--fg)}
+.not{grid-column:span 1;margin-top:26px;background:var(--red);color:#fff;border-radius:18px;padding:28px 28px 30px;align-self:start}
+.not h3{font-family:var(--display);font-weight:900;font-size:22px;letter-spacing:-.01em;text-transform:uppercase;margin-bottom:14px}
+.not li{list-style:none;padding:6px 0;border-top:1px solid rgba(255,255,255,.25)}
+
+/* ---------- footer marquee ---------- */
+.foot{padding:clamp(40px,8vh,90px) 0 40px;overflow:hidden;border-top:1px solid var(--line)}
+.marquee{display:flex;width:max-content;font-family:var(--display);font-weight:900;font-size:clamp(60px,12vw,220px);line-height:1;letter-spacing:-.04em;text-transform:uppercase;white-space:nowrap}
+.marquee span{padding-right:.4em}
+.marquee .o{color:var(--fg);opacity:.16}
+.foot-row{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:30px var(--gut) 0;font-family:var(--display);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.foot-row button{border:1px solid var(--line);border-radius:99px;padding:12px 20px;letter-spacing:.24em;text-transform:uppercase;font-family:var(--display);font-size:11px;transition:background-color .3s,color .3s}
+.foot-row button:hover{background:var(--fg);color:var(--bg)}
+
+/* ---------- lightbox ---------- */
+.lb{position:fixed;inset:0;z-index:97;background:rgba(10,8,7,.94);display:none;align-items:center;justify-content:center;color:#fff}
+.lb.open{display:flex}
+.lb img{max-width:92vw;max-height:84vh;object-fit:contain;border-radius:6px;box-shadow:0 40px 120px rgba(0,0,0,.6)}
+.lb-btn{position:absolute;top:50%;width:56px;height:56px;margin-top:-28px;border-radius:50%;border:1px solid rgba(255,255,255,.3);display:grid;place-items:center;transition:background-color .3s}
+.lb-btn:hover{background:rgba(255,255,255,.12)}
+.lb-prev{left:2vw}.lb-next{right:2vw}
+.lb-close{position:absolute;top:18px;right:var(--gut);font-family:var(--display);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:12px 0}
+.lb-count{position:absolute;bottom:22px;left:0;right:0;text-align:center;font-family:var(--display);font-size:11px;letter-spacing:.3em}
+.lb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .hud .hud-ch{display:none}
+  .hud .hud-sub{display:none}
+  .city{grid-template-columns:1fr;gap:10px}
+  .city-n{display:none}
+  .city-mob{display:block;border-radius:12px;overflow:hidden;aspect-ratio:16/10;margin-top:8px}
+  .city-mob img{width:100%;height:100%;object-fit:cover}
+  .st-card{height:72vh;top:9vh}
+  .st-in{grid-template-columns:1fr;gap:6px}
+  .st-n{font-size:72px}
+  .map-grid{grid-template-columns:1fr;align-content:center;gap:10px;padding:64px var(--gut) 20px}
+  .map svg{max-height:52vh}
+  .map-side h2{display:none}
+  .map-side .eyebrow{display:none}
+  .stops{display:none}
+  .stats{margin-top:6px;gap:18px}
+  .stat b{font-size:26px}
+  .chapter-intro{grid-template-columns:1fr}
+  .day-hero{height:72vh;height:72svh}
+  .day-hero .ph{clip-path:inset(8% 4% 8% 4% round 16px)}
+  .day-kick{left:calc(4% + 14px);top:calc(8% + 16px)}
+  .day-body{grid-template-columns:1fr}
+  .collage{justify-content:flex-start;padding:10px 0 0 14px}
+  .card{width:44vw;margin:-8px -14px}
+  .card:nth-child(2){margin-top:40px}
+  .film-track{height:auto;padding:110px var(--gut) 50px;overflow-x:auto;width:100%;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .film-track::-webkit-scrollbar{display:none}
+  .film-track .ph,.film-track .ph:nth-child(even){height:58vh;scroll-snap-align:center}
+  .film-head{top:50px}
+  .incl-grid{grid-template-columns:1fr}
+  .lb-btn{top:auto;bottom:16px;margin-top:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .grain,.scroll-hint i{animation:none}
+}
+</style>
+</head>
+<body class="is-loading">
+
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <div class="loader-count" id="loaderCount">00</div>
+    <div class="loader-label">дней · Австралия</div>
+  </div>
+  <div class="loader-bar" id="loaderBar"></div>
+</div>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="hud" aria-hidden="true">
+  <span><b>Австралия</b><span class="hud-sub"> — Три стихии</span></span>
+  <span class="hud-ch" id="hudCh">Июль 2026</span>
+  <span class="hud-day" id="hudDay">15 дней</span>
+</header>
+<div class="progress" id="progress"></div>
+<div class="cursor" id="cursor"><span>смотреть</span></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero" id="hero" data-theme="night">
+    <div class="hero-side l"><img src="img/p02_0.webp" alt="Улуру на закате"></div>
+    <div class="hero-side r"><img src="img/p03_0.webp" alt="Побережье и небоскрёбы"></div>
+    <div class="hero-media" id="heroMedia"><picture><source media="(min-aspect-ratio: 4/5)" srcset="img/p04_0.webp"><img src="img/p01_0.webp" alt="Закат над побережьем Австралии"></picture></div>
+    <div class="hero-title">
+      <h1 data-split>АВСТРАЛИЯ</h1>
+      <div class="hero-sub" data-hero-sub>Три стихии · Июль 2026</div>
+    </div>
+    <div class="hero-foot" data-hero-sub>
+      <span>Воздух · Огонь · Вода</span>
+      <span class="scroll-hint">Листайте <i></i></span>
+    </div>
+  </section>
+
+  <!-- MANIFESTO -->
+  <section class="manifesto" data-theme="night">
+    <div class="eyebrow" data-r>Сценарий путешествия</div>
+    <p class="big" data-words>Путешествие по континенту, выстроенное как последовательная смена состояний — от городской культуры к дикой природе, через сакральный центр континента к абсолютному расслаблению у океана...</p>
+  </section>
+
+  <!-- CITIES -->
+  <section class="cities" data-theme="night" id="cities">
+    <div class="cities-head">
+      <h2 data-r>Большие города как акты одного путешествия</h2>
+      <div class="eyebrow" data-r>3 города · 3 настроения</div>
+    </div>
+    <div id="cityList"></div>
+    <div class="city-float" id="cityFloat" aria-hidden="true"></div>
+  </section>
+
+  <!-- STACK -->
+  <section class="stack" data-theme="night">
+    <div class="stack-head"><div class="eyebrow" data-r>Из чего соткан маршрут</div></div>
+    <div id="stackList"></div>
+  </section>
+
+  <!-- MAP -->
+  <section class="map" id="map" data-theme="night">
+    <div class="map-grid">
+      <div class="map-svg" id="mapSvg"></div>
+      <div class="map-side">
+        <div class="eyebrow">Маршрут</div>
+        <h2>Континент за 15 дней</h2>
+        <ul class="stops" id="stops"></ul>
+        <div class="stats">
+          <div class="stat"><b data-count="15">0</b><span>дней</span></div>
+          <div class="stat"><b data-count="3">0</b><span>стихии</span></div>
+          <div class="stat"><b data-count="4">0</b><span>перелёта</span></div>
+          <div class="stat"><b data-count="1219">0</b><span>км дорог</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="journey"></div>
+
+  <!-- INCLUDED -->
+  <section class="incl" data-theme="night" id="incl">
+    <div class="incl-head">
+      <h2 data-r>Включено<em>в стоимость тура</em></h2>
+    </div>
+    <div class="incl-grid" id="inclGrid"></div>
+  </section>
+
+  <footer class="foot" data-theme="night">
+    <div class="marquee" id="marquee"></div>
+    <div class="foot-row">
+      <span>Австралия · Три стихии · Июль 2026</span>
+      <button id="toTop">Наверх</button>
+    </div>
+  </footer>
+</main>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Просмотр фото">
+  <button class="lb-close" id="lbClose">Закрыть</button>
+  <button class="lb-btn lb-prev" id="lbPrev" aria-label="Предыдущее фото"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <img id="lbImg" alt="">
+  <button class="lb-btn lb-next" id="lbNext" aria-label="Следующее фото"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  <div class="lb-count" id="lbCount"></div>
+</div>
+
+<script src="lib/gsap.min.js"></script>
+<script src="lib/ScrollTrigger.min.js"></script>
+<script src="lib/lenis.min.js"></script>
+<script>
+/* ===================== DATA (текст и фото из роадбука) ===================== */
+const SZ={"p01_0":[678,1200],"p02_0":[960,771],"p03_0":[1199,630],"p04_0":[1800,1057],"p05_0":[1200,652],"p05_1":[733,916],"p05_2":[733,916],"p05_3":[691,916],"p06_0":[682,852],"p06_1":[1024,556],"p06_2":[730,1045],"p06_3":[611,916],"p07_0":[957,1092],"p07_1":[427,640],"p07_2":[778,999],"p07_3":[1200,859],"p07_4":[732,953],"p08_0":[736,400],"p08_1":[733,916],"p08_2":[574,1021],"p08_3":[682,995],"p09_0":[1199,653],"p09_1":[702,872],"p09_2":[611,900],"p09_3":[624,780],"p10_0":[455,592],"p10_1":[619,675],"p10_2":[1024,1776],"p10_3":[1080,1222],"p10_4":[736,1104],"p11_0":[860,468],"p11_1":[568,715],"p11_2":[750,494],"p11_3":[611,916],"p12_0":[805,800],"p12_1":[1426,1158],"p12_2":[1025,900],"p12_3":[1156,1167],"p12_4":[851,1158],"p13_0":[736,438],"p14_0":[474,711],"p14_1":[1200,653],"p14_2":[575,704],"p14_3":[773,773],"p15_0":[1200,652],"p15_1":[433,630],"p15_2":[564,704],"p15_3":[739,946],"p16_0":[1200,799],"p16_1":[1088,1184],"p16_2":[1080,1350],"p16_3":[657,1151],"p16_4":[815,1019],"p17_0":[1200,652],"p17_1":[594,891],"p17_2":[470,704],"p17_3":[773,773],"p18_0":[900,489],"p18_1":[613,840],"p18_2":[799,599],"p18_3":[605,749],"p19_0":[736,401],"p19_1":[735,515],"p19_2":[522,753],"p19_3":[820,1025],"p20_0":[1080,642],"p21_0":[1066,580],"p21_1":[627,940],"p21_2":[687,858],"p21_3":[1000,666],"p22_0":[900,631],"p22_1":[768,1324],"p22_2":[736,401],"p23_0":[729,1093],"p23_1":[714,1071],"p23_2":[1200,652],"p24_0":[904,1205],"p24_1":[634,845],"p24_2":[1199,652],"p24_3":[567,714],"p25_0":[736,401]};
+
+const CITIES=[
+  {n:'Мельбурн',img:'p05_0',t:'Город викторианской архитектуры и колониального наследия, кофейной культуры и гастрономии мирового уровня, контраста классики и стрит-арта, креатива и интеллектуального стиля.',s:'Здесь начинается наш маршрут и задаётся его ритм...'},
+  {n:'Сидней',img:'p17_0',t:'Город света, воды и открытых перспектив, где знаковая архитектура, бухта и океан создают ощущение пространства, свободы и визуальной ясности.',s:'Здесь мы делаем паузу внутри потока природных впечатлений...'},
+  {n:'Брисбен',img:'p24_0',t:'Гостеприимный и тёплый город у реки, где зелёные пространства дарят ощущение спокойствия и завершённости путешествия.',s:'Здесь мы отдыхаем перед возвращением домой...'}
+];
+
+const THEMES=[
+  {h:'Океан как линия движения',img:'p19_0',p:['Великая океанская дорога — <b>одна из самых красивых в мире.</b>','Большой Барьерный риф — <b>крупнейшая живая экосистема планеты.</b>','Пляж Уайтхэвен и остров Гамильтон — <b>расслабленная курортная атмосфера</b> и пляжи с ослепительно белым песком.','Прибрежные маршруты Сиднея, Бондай-Бич и мост над океаном. Ноббис, закаты и драматические пейзажи.']},
+  {h:'Улуру',img:'p02_0',p:['<b>Сакральный центр Австралии</b> — огромный монолит посреди пустоты, незабываемые закаты, бескрайнее звёздное небо и световая инсталляция, где тысячи лампочек превращают <b>ландшафт пустыни в инопланетный.</b>']},
+  {h:'Дикая природа без постановки',img:'p10_1',p:['Морские котики и «пингвиний парад» на острове Филиппа, коалы в эвкалиптовом лесу и кенгуру на пляже.','Воздушная тропа над тропическим лесом в Баддеру, водопады Каррингтон и Белмор — <b>первозданные ландшафты, где человек вторичен.</b>']},
+  {h:'Гедонизм для эстетов',img:'p12_3',p:['Долина реки Ярра — <b>высокая гастрономия</b>, утончённые вина и современное искусство на фоне австралийской Тосканы.','Пенинсула — горячие термальные бассейны под открытым небом, расслабление и <b>восстановление с живописными видами.</b>']}
+];
+
+const CHAPTERS=[
+  {id:'air',num:'Глава I',word:'ВОЗДУХ',img:'p05_0',
+   lead:'Здесь нет плотности и «давления» впечатлений, это движение без напряжения. Всё раскрывается постепенно...',
+   list:['<b>Мельбурн</b> — переулки, кофейни, викторианская архитектура и набережная Ярры, живой и современный город с историческим наследием.','<b>The Great Ocean Road</b> — дорога, где движение вперёд главное впечатление, а пейзаж постоянно меняется.','<b>Скалы Двенадцать апостолов</b> — масштаб, который ощущается физически: только ветер и океан.','<b>Прибрежные леса и серф-пляжи</b> — дикая, подвижная среда, в которой всё живёт и дышит.','<b>Peninsula Hot Springs</b> — тишина и восстановление среди открытых видов.','<b>Yarra Valley</b> — соединение искусства, ландшафта, виноделия и гастрономии в едином пространстве.','<b>The Nobbies</b> — суровое побережье с мощной энергией океана.','<b>Парад пингвинов</b> — наблюдение за природой без вмешательства.'],
+   days:[1,2,3,4,5]},
+  {id:'fire',num:'Глава II',word:'ОГОНЬ',img:'p16_0',
+   lead:'Огни большого города и пылающие закаты Улуру...',
+   list:['Перелёт в центр континента и <b>резкая смена ландшафта</b>','Встреча с <b>Улуру</b> и наблюдение за его изменением на закате и рассвете','<b>Хайкинг</b> внутри Улуру и <b>Ката Тьюты</b>','Знакомство с культурой и верованиями <b>народа Анангу</b>','<b>Ужин под звёздами</b> в пустыне','Посещение инсталляции <b>Field of Light</b>','Возвращение в городскую среду — <b>Сидней</b>','Прогулки по <b>сиднейской бухте</b>','<b>Подъём на мост</b> и панорама города на закате','Вечер в <b>Сиднейской опере</b>','<b>Ночная жизнь</b> города','Поездка по окрестностям: пляжи Bondi и Bronte, прибрежная дорога, <b>природные маршруты</b> и водопады'],
+   close:'Этот отрезок путешествия — про концентрацию и внутреннюю силу. Пространство больше не рассеивает внимание, а собирает его в точку. Здесь движение замедляется, но восприятие становится острее...',
+   days:[6,7,8,9,10]},
+  {id:'water',num:'Глава III',word:'ВОДА',img:'p20_0',
+   lead:'Текучий островной ритм, погружение и бодрящий финал...',
+   list:['<b>Hamilton Island:</b> тропический остров, главный курорт Австралии, прозрачная вода, бухты, лодки и коктейли на закате.','<b>Whitehaven Beach</b> — белоснежный песок и бирюзовые лагуны.','<b>Hill Inlet</b> — хайкинг на смотровую за незабываемым видом.','Морские прогулки, <b>лучшие пляжи</b> и снорклинг.','<b>Большой Барьерный риф:</b> коралловые поля, риф с высоты птичьего полёта и сказочно красивый подводный мир.','<b>Брисбен:</b> река, набережные, мосты и открытые городские пространства. Мягкое завершение путешествия.'],
+   days:[11,12,13,14]}
+];
+
+const DAYS={
+ 1:{t:'Мельбурн',s:'Настраиваемся на путешествие',hero:'p05_0',drive:[30,'км · 36 мин'],
+    mood:'Спокойный вход в путешествие, отдых и акклиматизация.',locs:[],
+    p:['Мельбурн не стремится впечатлить с первого взгляда — он берёт качеством, обволакивает своей безмятежностью. Центр города, набережная Ярры, плотная сеть переулков, где прячутся лучшие кофейни и бары. Прогулка без особой цели и перегрузок, наблюдение за городской жизнью, первая попытка понять этот город, прислушаться к своим ощущениям.','Встречаемся в аэропорту Мельбурна и заселяемся в отель. Лёгкая прогулка по вечернему городу и ужин.'],
+    cards:['p05_1','p05_2','p05_3']},
+ 2:{t:'Мельбурн',s:'Исследуем город',hero:'p06_1',
+    mood:'Заглянуть в прошлое и узнать, чем живёт современная Австралия. Почувствовать уникальную атмосферу Мельбурна и понять, почему он считается культурной столицей страны.',
+    locs:['Royal Exhibition Building','State Library Victoria','Rippon Lea Estate','Fitzroy Gardens','Hosier Lane','AC/DC Lane','Fitzroy','Collingwood','St Kilda'],
+    p:['Мельбурн работает на контрастах. Викторианские аркады с полированными витринами — и через несколько кварталов стены, полностью покрытые уличным искусством. Районы Фицрой и Коллингвуд задают современный тон: галереи, студии, локальные бренды. К финалу дня — Сент-Килда и линия океана, где город выдыхает и становится шире.','Этот день вы проведёте в сопровождении гида, который покажет Мельбурн не как набор достопримечательностей, а как живую культурную систему.'],
+    cards:['p06_0','p06_2','p06_3'],film:{h:'Кадры Мельбурна',imgs:['p07_4','p07_0','p07_3','p07_1','p07_2'],end:'Живая культурная система, а не набор достопримечательностей.'}},
+ 3:{t:'Великая океанская дорога',s:'Дорога как достопримечательность',hero:'p08_0',drive:[406,'км · 6 ч'],
+    mood:'Выехать утром из Мельбурна и отправиться к океану.',
+    locs:['Torquay','Bells Beach','Lorne','Teddy’s Lookout','Apollo Bay','12 Apostles','Gibson Steps','Loch Ard Gorge'],
+    p:['Одна из самых красивых дорог в мире, где каждый поворот — новый кадр.','Безграничные панорамы, пляжи, океан, коалы в дикой природе, ветер в лицо — и как финал, фигурные скалы «Двенадцать апостолов» на закате.','Это не просто переезд, а самостоятельный опыт, где проплывающие за окном виды становятся главным событием. Возвращение в Лорн на ночлег.'],
+    cards:['p08_1','p08_2','p08_3']},
+ 4:{t:'Пенинсула и о. Филиппа',s:'Рукотворная эстетика и дикая природа',hero:'p09_0',drive:[256,'км · 5 ч'],
+    mood:'Суровая и мистическая природа двух островов и животные в дикой природе. Отдых в горячих источниках, парк скульптур, гастрономия и вино, закат, «парад пингвинов».',
+    locs:['Горячие источники Peninsula','Point Leo Estate','The Nobbies','Phillip Island'],
+    p:['Возвращаемся по Великой океанской дороге, чтобы уже к обеду расслабиться в горячих источниках с умиротворяющими видами. Здесь всё работает на восстановление и тишину.','Далее — Point Leo Estate, где винодельня, ресторан и парк скульптуры выстроены как единое визуальное поле: искусство, ландшафт и гастрономия. Наслаждение для эстетов.','К вечеру маршрут резко меняет характер. Ноббис — это ветер, волны и жёсткий ландшафт. Закат на фоне чёрных скал и неспокойного океана выглядит особенно драматично.','После заката — «пингвиний парад» на острове Филиппа. Маленькие пингвины выходят из воды и деловито направляются к своим норам, очень трогательное зрелище.'],
+    cards:['p09_1','p09_2','p09_3'],film:{h:'Океан и острова',imgs:['p10_2','p10_0','p10_3','p10_1','p10_4'],end:'Наблюдение за природой без вмешательства.'}},
+ 5:{t:'Винодельни долины Ярра',s:'Австралийская версия Тосканы',hero:'p11_0',drive:[194,'км · 4 ч'],
+    mood:'Наслаждение холмами, покрытыми виноградниками, современной архитектурой и высокой гастрономией. Длинные обеды, сыры, искусство и дегустации вин у камина. Гедонизм в чистом его проявлении.',
+    locs:['Yering Station','Yarra Valley Dairy','TarraWarra Estate','Levantine Hill Estate','Oakridge Wines','Chandon Australia'],
+    p:['Это день, когда Австралия раскрывается как страна утончённого вкуса и стиля. Мы посетим лучшие и при этом совершенно разные винодельни региона.','Yering Station — классика и ремесло, старейшая винодельня региона (1838 г.). Levantine Hill — дизайнерская интерпретация винодельни. Chandon Australia — французская эстетика и тихая роскошь.','Ужин в Oakridge Wines — одном из лучших ресторанов страны — и как завершение дня бокал игристого на закате.','Ночуем в Мельбурне. Завтра начинается новая глава путешествия — мы летим в самое сердце Австралии.'],
+    cards:['p11_1','p11_2','p11_3'],film:{h:'Вкус долины',imgs:['p12_1','p12_0','p12_4','p12_2'],end:'Гедонизм в чистом его проявлении.'}},
+ 6:{t:'Улуру',s:'Сакральный центр Австралии',hero:'p14_1',
+    mood:'Резкая смена визуального ряда — красная земля и открытый горизонт. Темп замедляется, путешествие становится глубже.',
+    locs:['Uluru','Смотровые площадки','Field of Light'],
+    p:['Мы перелетаем в сердце континента, где открывается другая Австралия — пустынная, мистическая, древняя.','Созерцание здесь становится частью опыта. Наблюдение за солнцем и звёздами — обязательный ритуал, а тишина ощущается физически.','Красный монолит в центре пустыни — не просто природный объект, а священное тело, сакральное пространство для коренного народа анангу, место церемоний и связи с предками.','После перелёта — отдых и постепенное погружение. Закат, ужин под звёздами и Field of Light — тысячи огней, превращающих ночную пустыню в световую инсталляцию. Попробуем уловить магию, царящую здесь.'],
+    cards:['p14_0','p14_2','p14_3']},
+ 7:{t:'Улуру и Ката Тьюта',s:'Культура аборигенов и хайкинг',hero:'p15_0',
+    mood:'Движение внутри ландшафта и постепенное понимание места.',
+    locs:['Uluru','Mala Walk','Mutitjulu Waterhole','Kata Tjuta','Valley of the Winds','Walpa Gorge'],
+    p:['Встретим рассвет в пустыне и понаблюдаем, как монолит меняет цвет с каждым новым лучом солнца.','Хайкинг у подножия Улуру: тропы, пещеры, водоёмы, наскальные рисунки и истории о культуре анангу.','После обеда обходим Ката Тьюту. Это другая форма: не одна скала, а массив, который раскрывается через треки. Долина ветров и Ущелье Уолпа дают разную динамику — от открытого пространства к узким проходам. Тут другая энергия, более дикая и суровая.','Этот день не перегружен событиями, но даёт одно из самых сильных впечатлений всего маршрута.'],
+    cards:['p15_1','p15_2','p15_3'],film:{h:'Красное сердце',imgs:['p16_2','p16_1','p16_3','p16_4','p13_0'],end:'Тишина, которая ощущается физически.'}},
+ 8:{t:'Сидней',s:'Передышка перед новой главой',hero:'p17_0',
+    mood:'Спокойное утро в Улуру и возвращение в привычную цивилизацию.',
+    locs:['Sydney Harbour','Opera House','Circular Quay'],
+    p:['После пустыни Сидней ощущается особенно ярко и современно. Город встречает водой, светом и выразительной архитектурой. Всё кажется живым и динамичным.','Прилетаем в Сидней и отправляемся на вечернюю прогулку. Сидней не требует многого: бухта, Опера и мост сразу собираются в один кадр, которым мы будем наслаждаться за ужином.'],
+    cards:['p17_1','p17_2','p17_3']},
+ 9:{t:'Сидней',s:'Энергия большого города',hero:'p18_0',
+    mood:'Получить максимум впечатлений от этого динамичного города.',
+    locs:['Sydney Opera House','Harbour Bridge','The Rocks','Royal Botanic Garden','Sydney Harbour'],
+    p:['Гуляем по Сиднею. Посетим исторические кварталы и современные пространства, пересечём бухту на пароме, посмотрим на знаменитый театр с разных ракурсов, сходим в Ботанический сад, а на закате поднимемся на один из крупнейших арочных мостов в мире, чтобы увидеть панораму Сиднея.','Вечером, нарядные, устроим поход в Сиднейскую оперу, а после увидим, как город поменяется ближе к ночи, когда откроются самые шумные бары.','Этот день собирает Сидней во всех его проявлениях — всё складывается в единый образ.'],
+    cards:['p18_1','p18_2','p18_3']},
+ 10:{t:'Окрестности Сиднея',s:'Сидней — это не только опера',hero:'p19_0',drive:[333,'км · 6 ч'],
+    mood:'Постепенное возвращение к природе.',
+    locs:['Bondi Beach','Bronte Beach','Sea Cliff Bridge','Kiama','Milton Park'],
+    p:['Садимся в машину и уезжаем из Сиднея на весь день.','Красивейшие пляжи, дорога над океаном, колоритные городки, непроходимый лес с воздушной тропой, два водопада, живописный горный серпантин и вечер в старинной английской усадьбе.'],
+    cards:['p19_3','p19_2','p19_1']},
+ 11:{t:'Остров Гамильтон',s:'Отдыхаем, как австралийцы',hero:'p21_0',
+    mood:'Привыкнуть к теплу и поймать курортное настроение.',
+    locs:['Hamilton Island','Пляжи и смотровые точки'],
+    p:['Прилетаем на остров, пляж и коктейли после заката. Перезагрузка перед новой главой нашего путешествия — встречей с Большим Барьерным рифом.'],
+    cards:['p21_1','p21_2','p21_3']},
+ 12:{t:'Пляж Уайтхейвен',s:'Фантастические цвета',hero:'p22_0',
+    mood:'Насладиться океаном и райскими пляжами на полную катушку.',
+    locs:['Whitehaven Beach','Hill Inlet'],
+    p:['Морская прогулка по живописным лагунам, пляжи с белым песком, снорклинг, хайкинг на смотровую Хилл Инлет.'],
+    cards:['p22_1','p22_2']},
+ 13:{t:'Большой Барьерный риф',s:'Кульминация путешествия',hero:'p23_2',
+    mood:'Понять, насколько огромен Большой Барьерный риф и что это вообще такое.',
+    locs:['Большой Барьерный риф','Коралловые зоны'],
+    p:['Весь день Большой Барьерный риф. Выход в океан и полёт на вертолёте, чтобы оценить масштаб рифа сверху.','Под водой — одна среда: кораллы, движение, цвет, это параллельная вселенная, с воздуха впечатление только усиливается, и ты окончательно влюбляешься в Австралию.'],
+    cards:['p23_0','p23_1']},
+ 14:{t:'Брисбен',s:'Комфортный финал перед дорогой домой',hero:'p24_2',
+    mood:'Новый город и пауза для того, чтобы всем вместе вспомнить и снова пережить опыт предыдущих дней в Австралии.',
+    locs:['South Bank','Brisbane River'],
+    p:['Прогулка по центральному району, набережным и пешеходным мостам. Умиротворяющая водная прогулка на катамаране по реке Брисбен и остановки в очаровательных ресторанчиках города.'],
+    cards:['p24_0','p24_1','p24_3']}
+};
+
+const INCL=[
+  {h:'Логистика и сопровождение',l:['Полное сопровождение и координация путешествия','Встреча в аэропорту и индивидуальные трансферы по маршруту','Все внутренние перелёты по программе','Трансферы аэропорт — отель — аэропорт в каждом городе','Вода для участников']},
+  {h:'Проживание',l:['Проживание в тщательно подобранных отелях (Мельбурн, остров Филиппа, Улуру, Сидней, остров Гамильтон, Брисбен)','Завтраки в отелях']},
+  {h:'Экскурсии и активности',l:['Обзорные экскурсии в Мельбурне и Сиднее','Поездка по легендарной The Great Ocean Road','Посещение острова Филиппа и билеты на «парад пингвинов»','Винодельни и дегустации в Yarra Valley','Билеты в Сиднейскую оперу (по наличию)','Входные билеты в музеи и в национальные парки по программе']},
+  {h:'Улуру',l:['Экскурсия к Улуру и Kata Tjuta с гидом','Рассвет у Улуру (экскурсия)','Пикник на закате у Улуру (с вином и лёгкими закусками)','Ужин под звёздным небом','Field of Light (ночная инсталляция, вход)']},
+  {h:'Океан и риф',l:['Полёт над Большим Барьерным рифом на вертолёте','Морская прогулка к Whitehaven Beach с обедом','Хайкинг на Hill Inlet','Тур на Большой Барьерный риф с обедом и снорклингом','Дайвинг (опционально)']},
+  {h:'Дополнительный опыт',l:['Круиз по реке в Брисбене','Горячие источники Peninsula']}
+];
+const NOT=['Билеты в Австралию','Виза','Обеды и ужины (вне программы)'];
+
+/* ===================== RENDER ===================== */
+const $=(s,c=document)=>c.querySelector(s), $$=(s,c=document)=>[...c.querySelectorAll(s)];
+const pad=n=>String(n).padStart(2,'0');
+const img=(id,alt='',eager)=>`<img src="img/${id}.webp" width="${SZ[id][0]}" height="${SZ[id][1]}" alt="${alt}" ${eager?'':'loading="lazy"'} decoding="async">`;
+const ph=(id,alt,cls='')=>`<div class="ph ${cls}" data-cursor="view" data-full="${id}">${img(id,alt)}</div>`;
+
+$('#cityList').innerHTML=CITIES.map((c,i)=>`
+  <div class="city" data-img="${c.img}">
+    <div class="city-n">0${i+1}</div>
+    <div class="city-name">${c.n}</div>
+    <div class="city-text">${c.t}<strong>${c.s}</strong></div>
+    <div class="city-mob">${img(c.img,c.n)}</div>
+  </div>`).join('');
+$('#cityFloat').innerHTML=CITIES.map(c=>`<img src="img/${c.img}.webp" alt="" data-k="${c.img}">`).join('');
+
+$('#stackList').innerHTML=THEMES.map((t,i)=>`
+  <article class="st-card">
+    ${ph(t.img,t.h)}
+    <div class="st-in"><div class="st-n">0${i+1}</div><div><h3>${t.h}</h3>${t.p.map(x=>`<p>${x}</p>`).join('')}</div></div>
+  </article>`).join('');
+
+function dayHTML(n){
+  const d=DAYS[n];
+  return `<section class="day" data-day="${n}">
+    <div class="day-hero">
+      ${ph(d.hero,d.t)}
+      <div class="day-kick"><span class="pill">День ${pad(n)} / 15</span>${d.drive?`<span class="pill">общий перегон ${d.drive[0]} ${d.drive[1]}</span>`:''}</div>
+      <div class="day-num" aria-hidden="true">${pad(n)}</div>
+    </div>
+    <div class="day-body">
+      <div class="day-text">
+        <h2 class="day-title" data-split>${d.t}</h2>
+        <p class="day-sub" data-r>${d.s}</p>
+        <p class="mood" data-r><small>Настроение дня</small>${d.mood}</p>
+        ${d.locs.length?`<ul class="locs" data-stagger>${d.locs.map(l=>`<li>${l}</li>`).join('')}</ul>`:''}
+        <div class="prose">${d.p.map(x=>`<p data-r>${x}</p>`).join('')}</div>
+        ${d.drive?`<div class="drive" data-r><b data-count="${d.drive[0]}">0</b><span>${d.drive[1]} · общий перегон</span></div>`:''}
+      </div>
+      <div class="collage">${d.cards.map((c,i)=>`<div class="card" data-i="${i}"><div class="card-in">${ph(c,d.t)}</div></div>`).join('')}</div>
+    </div>
+  </section>`+(d.film?`<section class="film" data-film>
+      <div class="film-head"><span class="eyebrow">День ${pad(n)}</span><h3>${d.film.h}</h3></div>
+      <div class="film-track">${d.film.imgs.map(i=>ph(i,d.film.h)).join('')}<div class="film-end">${d.film.end}</div></div>
+    </section>`:'');
+}
+$('#journey').innerHTML=CHAPTERS.map(c=>`
+  <div data-theme="${c.id}" data-chapter="${c.num} · ${c.word}">
+    <section class="chapter-pin">
+      ${ph(c.img,c.word)}
+      <div class="chapter-word"><div class="num">${c.num}</div><h2>${[...c.word].map(l=>`<span class="lt">${l}</span>`).join('')}</h2></div>
+    </section>
+    <section class="chapter-intro">
+      <div><div class="eyebrow" data-r>${c.num} / ${c.word.toLowerCase()}</div><p class="chapter-lead" data-r style="margin-top:22px">${c.lead}</p>${c.close?`<p class="chapter-close" data-r>${c.close}</p>`:''}</div>
+      <ol class="chapter-list">${c.list.map(l=>`<li data-r><span>${l}</span></li>`).join('')}</ol>
+    </section>
+    ${c.days.map(dayHTML).join('')}
+  </div>`).join('')+`
+  <section class="finale" data-theme="night" data-day="15" data-chapter="Финал">
+    ${ph('p25_0','Вылет')}
+    <div class="finale-in"><div class="k">День 15 / 15</div><h2 data-split>Вылет</h2><p>Дорога домой</p></div>
+  </section>`;
+
+$('#inclGrid').innerHTML=INCL.map((g,i)=>`<div class="grp" data-r><h3><i>${pad(i+1)}</i>${g.h}</h3><ul>${g.l.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')+
+  `<div class="not" data-r><h3>Не включено</h3><ul>${NOT.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+
+const mq=`<span>Австралия</span><span class="o">Три стихии</span><span>Июль 2026</span><span class="o">Воздух · Огонь · Вода</span>`;
+$('#marquee').innerHTML=mq+mq;
+
+/* split text into masked chars (words kept together) */
+$$('[data-split]').forEach(el=>{
+  el.innerHTML=el.textContent.trim().split(' ').map(w=>`<span class="w">${[...w].map(c=>`<span class="ch"><span>${c}</span></span>`).join('')}</span>`).join(' ');
+});
+$$('[data-words]').forEach(el=>{
+  el.innerHTML=el.textContent.trim().split(/\s+/).map(w=>`<span class="wd">${w}</span>`).join(' ');
+});
+
+/* ===================== MAP (SVG) ===================== */
+const P=(lon,lat)=>[ +((lon-112)*20).toFixed(1), +((-lat-10)*21).toFixed(1) ];
+const pts=a=>a.map(([lo,la])=>P(lo,la).join(',')).join(' L');
+const AUS=[[113.6,-22],[114.1,-26],[115,-29.5],[115.7,-31.9],[115,-34.3],[118,-35],[121.9,-33.9],[124,-33],[126,-32.3],[129,-31.6],[131.5,-31.5],[134,-32.8],[135.6,-34.8],[136.6,-33.8],[137.8,-32.6],[137.8,-35.6],[138.6,-34.9],[139.5,-35.8],[140.5,-38],[142,-38.4],[143.5,-38.85],[144,-38.5],[144.4,-38.27],[144.62,-38.27],[144.36,-38.12],[144.9,-37.85],[145.1,-38.15],[144.75,-38.36],[144.95,-38.5],[145.25,-38.35],[145.5,-38.4],[145.6,-38.6],[146,-38.8],[146.3,-39.1],[148,-37.8],[149.9,-37.5],[150.2,-35.7],[150.9,-34.6],[151.25,-33.9],[152.5,-32.4],[153.6,-28.6],[153.1,-27.4],[153.2,-25],[151.3,-23.8],[149.5,-22.4],[148.9,-20.4],[146.8,-19.2],[145.8,-16.9],[145.3,-15],[143.5,-14],[142.5,-10.7],[141.6,-12.6],[141.5,-15.5],[140.8,-17.5],[139.2,-17.3],[137,-15.9],[135.5,-14.8],[136.7,-12.2],[135,-12.2],[132.5,-11.6],[130.8,-12.4],[129.5,-14.8],[128,-15],[126,-14],[124.2,-16.3],[122.2,-18],[121,-19.5],[118.5,-20.3],[116.7,-20.6],[114.2,-21.8]];
+const TAS=[[144.6,-40.7],[148.3,-40.9],[148.2,-42.3],[147.3,-43.3],[146,-43.5],[145.2,-42.2]];
+const PHIL=[[145.1,-38.5],[145.37,-38.47],[145.35,-38.55],[145.13,-38.53]];
+const C={mel:[144.96,-37.81],apo:[143.1,-38.66],phi:[145.2,-38.5],yar:[145.45,-37.68],ulu:[131.04,-25.34],syd:[151.21,-33.87],kia:[150.85,-34.67],ham:[148.96,-20.35],bri:[153.03,-27.47]};
+const curve=(a,b,bend)=>{const A=P(...a),B=P(...b);const mx=(A[0]+B[0])/2,my=(A[1]+B[1])/2;const dx=B[0]-A[0],dy=B[1]-A[1];
+  return `M${A} Q${(mx-dy*bend).toFixed(1)},${(my+dx*bend).toFixed(1)} ${B}`;};
+const SEGS=[
+  {d:'M'+pts([C.mel,[144.36,-38.15],[144.32,-38.33],[143.98,-38.54],[143.67,-38.76],[143.5,-38.82],C.apo]),stop:'apo'},
+  {d:'M'+pts([C.apo,[143.67,-38.74],[143.98,-38.52],[144.32,-38.31],[144.62,-38.27],[144.74,-38.34],[144.88,-38.42],[145.07,-38.42],C.phi]),stop:'phi'},
+  {d:'M'+pts([C.phi,[145.3,-38.3],[145.3,-37.95],C.yar,C.mel]),stop:'yar'},
+  {d:curve(C.mel,C.ulu,-.18),fly:1,stop:'ulu'},
+  {d:curve(C.ulu,C.syd,-.2),fly:1,stop:'syd'},
+  {d:'M'+pts([C.syd,[151.27,-33.89],[150.97,-34.25],C.kia,[150.42,-34.47],C.syd]),stop:'kia'},
+  {d:curve(C.syd,C.ham,.22),fly:1,stop:'ham'},
+  {d:curve(C.ham,C.bri,.25),fly:1,stop:'bri'}
+];
+const LBL={mel:['Мельбурн',-12,4,'end'],apo:['12 апостолов',0,4.5,'middle'],phi:['о. Филиппа',2,3.5,'start'],yar:['Ярра',2,-1.5,'start'],
+  ulu:['Улуру',0,-16,'middle'],syd:['Сидней',-12,4,'end'],kia:['Киама',-12,14,'end'],ham:['о. Гамильтон',-12,4,'end'],bri:['Брисбен',12,5,'start']};
+const VIC=['apo','phi','yar']; // мелкие точки без подписей — их называет список справа
+let svg=`<svg viewBox="380 330 500 420" id="mapEl" data-x role="img" aria-label="Карта маршрута по Австралии"><defs>`;
+SEGS.forEach((s,i)=>{if(s.fly)svg+=`<mask id="m${i}" maskUnits="userSpaceOnUse" x="-100" y="-100" width="1100" height="1000"><path class="mask-path" d="${s.d}"/></mask>`});
+svg+=`</defs><path class="land" d="M${pts(AUS)}Z M${pts(TAS)}Z M${pts(PHIL)}Z"/>`;
+SEGS.forEach((s,i)=>{svg+=s.fly?`<path class="route fly" d="${s.d}" mask="url(#m${i})"/>`:`<path class="route drive" d="${s.d}"/>`});
+Object.entries(C).forEach(([k,c])=>{const [x,y]=P(...c);const v=VIC.includes(k);const r=v?2.6:5.5;
+  svg+=`<g class="city-pt ${v?'vic':'big'}" data-k="${k}"><circle class="halo" cx="${x}" cy="${y}" r="${r*2.4}"/><circle class="dot" cx="${x}" cy="${y}" r="${r}"/></g>`;
+  if(v)return;const L=LBL[k];
+  svg+=`<text class="lbl big" data-k="${k}" x="${x+L[1]}" y="${y+L[2]}" text-anchor="${L[3]}" font-size="16">${L[0]}</text>`;
+});
+svg+=`</svg>`;
+$('#mapSvg').innerHTML=svg;
+const STOPS=[['mel','Мельбурн','день 1–2'],['apo','Великая океанская дорога','день 3'],['phi','Пенинсула и о. Филиппа','день 4'],['yar','Долина Ярра','день 5'],['ulu','Улуру и Ката Тьюта','день 6–7'],['syd','Сидней','день 8–9'],['kia','Окрестности Сиднея','день 10'],['ham','Гамильтон и риф','день 11–13'],['bri','Брисбен','день 14']];
+$('#stops').innerHTML=STOPS.map(s=>`<li data-k="${s[0]}"><span>${s[1]}</span><span>${s[2]}</span></li>`).join('');
+
+/* ===================== LIGHTBOX ===================== */
+const gallery=$$('[data-full]').map(e=>e.dataset.full).filter((v,i,a)=>a.indexOf(v)===i);
+let lbI=0;
+const lb=$('#lb'),lbImg=$('#lbImg');
+function lbShow(i){lbI=(i+gallery.length)%gallery.length;lbImg.src=`img/${gallery[lbI]}.webp`;$('#lbCount').textContent=`${pad(lbI+1)} / ${gallery.length}`;
+  if(window.gsap)gsap.fromTo(lbImg,{opacity:0,scale:.96},{opacity:1,scale:1,duration:.6,ease:'expo.out'});}
+function lbOpen(id){lbShow(gallery.indexOf(id));lb.classList.add('open');window.lenis&&lenis.stop();}
+function lbClose(){lb.classList.remove('open');window.lenis&&lenis.start();}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-full]');if(t&&!t.closest('.chapter-pin,.st-card,.finale'))lbOpen(t.dataset.full);});
+$('#lbClose').onclick=lbClose;$('#lbPrev').onclick=()=>lbShow(lbI-1);$('#lbNext').onclick=()=>lbShow(lbI+1);
+lb.addEventListener('click',e=>{if(e.target===lb)lbClose()});
+document.addEventListener('keydown',e=>{if(!lb.classList.contains('open'))return;if(e.key==='Escape')lbClose();if(e.key==='ArrowLeft')lbShow(lbI-1);if(e.key==='ArrowRight')lbShow(lbI+1);});
+
+/* ===================== MOTION ===================== */
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fine=matchMedia('(pointer:fine)').matches;
+const mobile=()=>innerWidth<=900;
+gsap.registerPlugin(ScrollTrigger);
+
+let lenis=null;
+if(!reduce){
+  lenis=new Lenis({lerp:.085,wheelMultiplier:1});
+  window.lenis=lenis;
+  lenis.on('scroll',ScrollTrigger.update);
+  gsap.ticker.add(t=>lenis.raf(t*1000));
+  gsap.ticker.lagSmoothing(0);
+  lenis.stop();
+}
+$('#toTop').onclick=()=>lenis?lenis.scrollTo(0,{duration:2.4}):scrollTo({top:0,behavior:'smooth'});
+
+function setTheme(t){if(document.documentElement.dataset.theme!==t){document.documentElement.dataset.theme=t;FX.mode=t;}}
+const hudCh=$('#hudCh'),hudDay=$('#hudDay');
+function hudSet(el,txt){if(el.textContent===txt)return;gsap.killTweensOf(el);gsap.to(el,{opacity:0,y:-6,duration:.18,onComplete:()=>{el.textContent=txt;gsap.fromTo(el,{opacity:0,y:6},{opacity:1,y:0,duration:.35});}});}
+
+/* --- cursor --- */
+if(fine){
+  const cur=$('#cursor'),dot=$('#cursorDot');
+  const cx=gsap.quickTo(cur,'x',{duration:.5,ease:'power3'}),cy=gsap.quickTo(cur,'y',{duration:.5,ease:'power3'});
+  addEventListener('mousemove',e=>{cx(e.clientX);cy(e.clientY);gsap.set(dot,{x:e.clientX,y:e.clientY});});
+  document.addEventListener('mouseover',e=>{const v=e.target.closest('[data-cursor="view"]');cur.classList.toggle('view',!!v&&!v.closest('.chapter-pin,.st-card,.finale'));});
+}
+
+/* --- counters --- */
+function countUp(el,dur=1.6){const to=+el.dataset.count;const o={v:0};gsap.to(o,{v:to,duration:dur,ease:'power2.out',onUpdate:()=>el.textContent=Math.round(o.v).toLocaleString('ru-RU')});}
+
+function initScroll(){
+  if(reduce){ $$('[data-count]').forEach(e=>e.textContent=(+e.dataset.count).toLocaleString('ru-RU')); return; }
+
+  /* HERO: pinned window expands to full screen */
+  const heroTl=gsap.timeline({scrollTrigger:{trigger:'#hero',start:'top top',end:'+=130%',pin:true,scrub:.8}});
+  heroTl.to('#heroMedia',{clipPath:'inset(0% 0% 0% 0% round 0px)',ease:'none'},0)
+    .to('#heroMedia img',{scale:1,ease:'none'},0)
+    .to('.hero-side.l',{xPercent:-160,rotation:-8,opacity:0,ease:'none'},0)
+    .to('.hero-side.r',{xPercent:160,rotation:8,opacity:0,ease:'none'},0)
+    .to('.hero-title h1',{scale:mobile()?1.08:1.25,letterSpacing:'0.02em',ease:'none'},0)
+    .to('[data-hero-sub]',{opacity:0,ease:'none',duration:.4},0)
+    .to('.hero-title',{opacity:0,yPercent:-12,ease:'none',duration:.35},.65);
+
+  /* manifesto words fill */
+  gsap.to('.manifesto .wd',{opacity:1,stagger:.08,ease:'none',scrollTrigger:{trigger:'.manifesto .big',start:'top 80%',end:'bottom 45%',scrub:true}});
+
+  /* generic reveals */
+  ScrollTrigger.batch('[data-r]',{start:'top 90%',once:true,onEnter:els=>{ // при резкой прокрутке пачка большая — общий разбег не дольше полсекунды
+    const vis=els.filter(e=>e.getBoundingClientRect().top<innerHeight), rest=els.filter(e=>!vis.includes(e));
+    gsap.set(rest,{opacity:1,y:0});
+    gsap.fromTo(vis,{y:40,opacity:0},{y:0,opacity:1,duration:1.1,ease:'expo.out',stagger:Math.min(.08,.5/Math.max(vis.length,1))});}});
+  gsap.set('[data-r]',{opacity:0});
+  $$('[data-stagger]').forEach(ul=>gsap.from(ul.children,{opacity:0,x:-24,duration:.8,ease:'expo.out',stagger:.05,scrollTrigger:{trigger:ul,start:'top 88%',once:true}}));
+  $$('.day-title,.finale h2').forEach(h=>gsap.from($$('.ch>span',h),{yPercent:110,rotation:6,duration:1.1,ease:'expo.out',stagger:.025,scrollTrigger:{trigger:h,start:'top 88%',once:true}}));
+  $$('[data-count]').forEach(el=>{ if(el.closest('#map'))return; ScrollTrigger.create({trigger:el,start:'top 90%',once:true,onEnter:()=>countUp(el)}); });
+
+  /* cities: floating image follows cursor */
+  if(fine){
+    const fl=$('#cityFloat'),fx=gsap.quickTo(fl,'x',{duration:.7,ease:'power3'}),fy=gsap.quickTo(fl,'y',{duration:.7,ease:'power3'});
+    let lastX=0;
+    $$('.city').forEach(row=>{
+      row.addEventListener('mouseenter',()=>{$$('img',fl).forEach(i=>i.classList.toggle('on',i.dataset.k===row.dataset.img));gsap.to(fl,{opacity:1,scale:1,duration:.6,ease:'expo.out'});});
+      row.addEventListener('mouseleave',()=>gsap.to(fl,{opacity:0,scale:.6,duration:.45,ease:'power3'}));
+      row.addEventListener('mousemove',e=>{fx(e.clientX-fl.offsetWidth/2);fy(e.clientY-fl.offsetHeight/2);gsap.to(fl,{rotation:gsap.utils.clamp(-14,14,(e.clientX-lastX)*.6),duration:.6});lastX=e.clientX;});
+    });
+  }
+  gsap.from('.city-name',{xPercent:-8,opacity:0,duration:1.2,ease:'expo.out',stagger:.12,scrollTrigger:{trigger:'#cityList',start:'top 80%',once:true}});
+
+  /* stacked theme cards */
+  const cards=$$('.st-card');
+  cards.forEach((c,i)=>{
+    gsap.to($('.ph img',c),{scale:1,ease:'none',scrollTrigger:{trigger:c,start:'top bottom',end:'top 12%',scrub:true}});
+    if(i<cards.length-1) gsap.to(c,{scale:.9,filter:'brightness(.5)',ease:'none',scrollTrigger:{trigger:cards[i+1],start:'top 75%',end:'top 12%',scrub:true}});
+  });
+
+  /* MAP: zoomed Victoria -> whole continent, route draws with scroll */
+  const mapEl=$('#mapEl');
+  const routes=$$('.route',mapEl);
+  const drawEls=routes.map((r,i)=>SEGS[i].fly?$(`#m${i} path`,mapEl):r);
+  drawEls.forEach(p=>{const L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L;});
+  gsap.set($$('.city-pt',mapEl),{opacity:0});gsap.set($$('.lbl',mapEl),{opacity:0});
+  const pt=k=>$(`.city-pt[data-k="${k}"]`,mapEl), lb_=k=>$(`.lbl[data-k="${k}"]`,mapEl);
+  const stopOn=k=>{$$('#stops li').forEach(li=>li.classList.remove('now'));const li=$(`#stops li[data-k="${k}"]`);if(!li)return;li.classList.add('on','now');};
+  const mapTl=gsap.timeline({scrollTrigger:{trigger:'#map',start:'top top',end:mobile()?'+=260%':'+=320%',pin:true,scrub:1,
+    onEnter:()=>$$('.stat b').forEach(e=>countUp(e,2)),
+    onUpdate:s=>{ // восстановить состояния списка при прокрутке назад
+      const t=mapTl.time();$$('#stops li').forEach(li=>{const at=marks[li.dataset.k];li.classList.toggle('on',t>=at);});
+      const cur=Object.entries(marks).filter(([k,v])=>t>=v).pop();$$('#stops li').forEach(li=>li.classList.toggle('now',cur&&li.dataset.k===cur[0]));
+    }}});
+  const marks={mel:0};
+  mapTl.to(pt('mel'),{opacity:1,duration:.3},0).to(lb_('mel'),{opacity:1,duration:.3},0);
+  let t=.4;
+  SEGS.forEach((s,i)=>{
+    if(i===3){ // перелёт в Улуру: отъезжаем камерой
+      mapTl.to(mapEl,{attr:{viewBox:'-30 -20 920 760'},duration:1.6,ease:'power2.inOut'},t);
+      t+=.6;
+    }
+    const dur=s.fly?1.1:.9;
+    mapTl.to(drawEls[i],{strokeDashoffset:0,duration:dur,ease:'none'},t);
+    t+=dur;
+    mapTl.fromTo(pt(s.stop),{opacity:0,scale:0},{opacity:1,scale:1,duration:.3,ease:'back.out(3)'},t-.05);
+    if(lb_(s.stop))mapTl.fromTo(lb_(s.stop),{opacity:0,y:6},{opacity:1,y:0,duration:.3},t);
+    marks[s.stop]=t-.05;
+    t+=.25;
+  });
+  mapTl.to({},{duration:.6});
+  gsap.to($$('.halo',mapEl),{scale:1.8,opacity:0,duration:1.8,repeat:-1,ease:'power1.out',stagger:{each:.25,repeat:-1}});
+
+  /* CHAPTERS: circle reveal + letters spread */
+  $$('.chapter-pin').forEach(sec=>{
+    const tl=gsap.timeline({scrollTrigger:{trigger:sec,start:'top top',end:'+=110%',pin:true,scrub:.8}});
+    const L=$$('.lt',sec),mid=(L.length-1)/2;
+    tl.to($('.ph',sec),{clipPath:'circle(75% at 50% 50%)',ease:'power1.in'},0)
+      .to($('.ph img',sec),{scale:1,ease:'none'},0)
+      .fromTo(L,{x:0},{x:(i)=>(i-mid)*(mobile()?6:28),ease:'none'},0)
+      .to($('.chapter-word h2',sec),{scale:mobile()?1.05:1.18,ease:'none'},0)
+      .to($('.chapter-word',sec),{opacity:0,duration:.25},.78);
+    gsap.from(L,{yPercent:120,opacity:0,stagger:.06,duration:1.2,ease:'expo.out',scrollTrigger:{trigger:sec,start:'top 70%',once:true}});
+  });
+
+  /* DAYS */
+  $$('.day').forEach(day=>{
+    const hero=$('.day-hero',day),phEl=$('.ph',hero),im=$('img',phEl),num=$('.day-num',day);
+    gsap.to(phEl,{clipPath:'inset(0% 0% 0% 0% round 0px)',ease:'none',scrollTrigger:{trigger:hero,start:'top 85%',end:'top 5%',scrub:.6}});
+    gsap.fromTo(im,{yPercent:-7},{yPercent:7,ease:'none',scrollTrigger:{trigger:hero,start:'top bottom',end:'bottom top',scrub:true}});
+    gsap.fromTo(num,{xPercent:18},{xPercent:-12,ease:'none',scrollTrigger:{trigger:hero,start:'top bottom',end:'bottom top',scrub:true}});
+    ScrollTrigger.create({trigger:hero,start:'top 30%',end:'bottom 30%',onToggle:s=>num.classList.toggle('fill',s.isActive)});
+    gsap.from($('.day-kick',day).children,{y:20,opacity:0,stagger:.1,duration:.9,ease:'expo.out',scrollTrigger:{trigger:hero,start:'top 60%',once:true}});
+    // polaroids: glide in from the sides, settle at a tilt
+    const cs=$$('.card',day);
+    cs.forEach((c,i)=>{const r=[-6,5,-3,4][i]||0;c.style.setProperty('--r',r);
+      gsap.fromTo(c,{x:(i%2?1:-1)*(mobile()?80:220),rotation:r*3,opacity:0},{x:0,rotation:r,opacity:1,duration:1.4,ease:'expo.out',delay:i*.12,scrollTrigger:{trigger:$('.collage',day),start:'top 82%',once:true}});
+      gsap.to(c,{y:(i-1)*-40,ease:'none',scrollTrigger:{trigger:$('.collage',day),start:'top bottom',end:'bottom top',scrub:true}});
+    });
+  });
+
+  /* FILMS: horizontal pinned strip (desktop) */
+  ScrollTrigger.matchMedia({
+    '(min-width: 901px)':()=>{
+      $$('[data-film]').forEach(f=>{
+        const tr=$('.film-track',f);
+        const dist=()=>tr.scrollWidth-innerWidth;
+        gsap.to(tr,{x:()=>-dist(),ease:'none',scrollTrigger:{trigger:f,start:'top top',end:()=>'+='+dist(),pin:true,scrub:.8,invalidateOnRefresh:true}});
+        $$('.ph img',tr).forEach(i=>gsap.to(i,{scale:1,ease:'none',scrollTrigger:{trigger:f,start:'top top',end:()=>'+='+dist(),scrub:true}}));
+      });
+    }
+  });
+
+  /* FINALE */
+  gsap.to('.finale .ph img',{scale:1,ease:'none',scrollTrigger:{trigger:'.finale',start:'top bottom',end:'bottom bottom',scrub:true}});
+
+  /* included groups */
+  $$('.grp').forEach(g=>gsap.from($$('li',g),{opacity:0,x:-16,stagger:.04,duration:.7,ease:'expo.out',scrollTrigger:{trigger:g,start:'top 85%',once:true}}));
+
+  /* marquee: endless, speeds up with scroll velocity */
+  const mqTl=gsap.to('#marquee',{xPercent:-50,ease:'none',duration:38,repeat:-1});
+  ScrollTrigger.create({start:0,end:'max',onUpdate:s=>{const v=gsap.utils.clamp(-6,6,s.getVelocity()/400);gsap.to(mqTl,{timeScale:1+Math.abs(v),duration:.3,overwrite:true});gsap.to(mqTl,{timeScale:1,duration:1.2,delay:.3});}});
+
+  /* --- theme by section --- */
+  $$('[data-theme]').forEach(sec=>{ if(sec===document.documentElement)return;
+    ScrollTrigger.create({trigger:sec,start:'top 55%',end:'bottom 55%',onEnter:()=>setTheme(sec.dataset.theme),onEnterBack:()=>setTheme(sec.dataset.theme)});
+  });
+  /* --- HUD --- */
+  $$('[data-chapter]').forEach(c=>ScrollTrigger.create({trigger:c,start:'top 50%',end:'bottom 50%',onToggle:s=>s.isActive&&hudSet(hudCh,c.dataset.chapter)}));
+  ScrollTrigger.create({trigger:'#journey',start:'top 50%',onLeaveBack:()=>{hudSet(hudCh,'Июль 2026');hudSet(hudDay,'15 дней');}});
+  $$('[data-day]').forEach(d=>ScrollTrigger.create({trigger:d,start:'top 50%',end:'bottom 50%',onToggle:s=>s.isActive&&hudSet(hudDay,`День ${pad(d.dataset.day)} / 15`)}));
+  gsap.to('#progress',{scaleX:1,ease:'none',scrollTrigger:{start:0,end:'max',scrub:.3}});
+  
+  
+  // пересчитываем триггеры в порядке документа, чтобы пины сверху учитывались ниже
+  const order=new Map($$('*').map((e,i)=>[e,i]));
+  const pos=st=>st.trigger&&order.has(st.trigger)?order.get(st.trigger):1e9;
+  ScrollTrigger.sort((a,b)=>pos(a)-pos(b)||a.start-b.start);
+  ScrollTrigger.refresh();
+
+  // images that load late change heights -> refresh
+  let rT;$$('img[loading="lazy"]').forEach(i=>i.addEventListener('load',()=>{clearTimeout(rT);rT=setTimeout(()=>ScrollTrigger.refresh(),250)},{once:true}));
+}
+
+/* ===================== PARTICLES (по стихии) ===================== */
+const FX={mode:'night',ps:[],cv:$('#fx'),ctx:null,w:0,h:0,dpr:Math.min(devicePixelRatio,2)};
+function fxResize(){FX.w=innerWidth;FX.h=innerHeight;FX.cv.width=FX.w*FX.dpr;FX.cv.height=FX.h*FX.dpr;FX.ctx=FX.cv.getContext('2d');FX.ctx.setTransform(FX.dpr,0,0,FX.dpr,0,0);}
+function fxSpawn(p,init){p.x=Math.random()*FX.w;p.y=init?Math.random()*FX.h:FX.h+20;p.s=Math.random();p.a=Math.random()*Math.PI*2;p.l=init?Math.random():0;return p;}
+function fxLoop(){
+  const c=FX.ctx;c.clearRect(0,0,FX.w,FX.h);const m=FX.mode;
+  FX.ps.forEach(p=>{
+    if(m==='air'){ // ветер: тонкие штрихи вдоль горизонтали
+      p.x+=1.2+p.s*2.4;p.y+=Math.sin((p.x+p.a*100)/90)*.35;if(p.x>FX.w+80){p.x=-80;p.y=Math.random()*FX.h;}
+      c.strokeStyle=`rgba(90,79,208,${.08+p.s*.16})`;c.lineWidth=1;c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x-30-p.s*60,p.y-Math.cos((p.x+p.a*100)/90)*4);c.stroke();
+    }else if(m==='fire'){ // искры поднимаются вверх и гаснут
+      p.y-=.5+p.s*1.3;p.x+=Math.sin(p.y/40+p.a)*.6;p.l+=.004;if(p.y<-10||p.l>1)fxSpawn(p,false);
+      const al=Math.sin(Math.min(p.l,1)*Math.PI)*(.35+p.s*.55);c.fillStyle=`rgba(255,${110+p.s*80|0},40,${al})`;c.shadowColor='rgba(255,90,31,.9)';c.shadowBlur=8;
+      c.beginPath();c.arc(p.x,p.y,.8+p.s*1.8,0,7);c.fill();c.shadowBlur=0;
+    }else if(m==='water'){ // пузырьки
+      p.y-=.3+p.s*.8;p.x+=Math.sin(p.y/60+p.a)*.4;if(p.y<-20)fxSpawn(p,false);
+      c.strokeStyle=`rgba(0,140,131,${.12+p.s*.22})`;c.lineWidth=1;c.beginPath();c.arc(p.x,p.y,2+p.s*6,0,7);c.stroke();
+    }else{ // ночь: мерцающие звёзды
+      p.a+=.02+p.s*.02;c.fillStyle=`rgba(242,235,225,${(.15+Math.sin(p.a)*.15)*p.s+.05})`;c.fillRect(p.x,p.y%FX.h,1.3,1.3);
+    }
+  });
+  requestAnimationFrame(fxLoop);
+}
+if(!reduce){fxResize();addEventListener('resize',fxResize);const n=innerWidth<700?40:80;for(let i=0;i<n;i++)FX.ps.push(fxSpawn({},true));fxLoop();}
+
+/* ===================== PRELOADER → INTRO ===================== */
+function intro(){
+  const tl=gsap.timeline();
+  tl.to('#loader',{yPercent:-100,duration:1.1,ease:'expo.inOut'})
+    .set('#loader',{display:'none'})
+    .add(()=>{document.body.classList.remove('is-loading');},'<')
+    .fromTo('#heroMedia',{clipPath:'inset(50% 50% 50% 50% round 18px)'},{clipPath:mobile()?'inset(18% 16% 22% 16% round 18px)':'inset(16% 37% 16% 37% round 18px)',duration:1.6,ease:'expo.out'},'-=.55')
+    .fromTo('.hero-side',{opacity:0,xPercent:0,rotation:0},{opacity:1,xPercent:i=>i?(mobile()?95:175):(mobile()?-95:-175),rotation:i=>i?6:-6,duration:1.6,ease:'expo.out'},'<.15')
+    .from('.hero-title h1 .ch>span',{yPercent:115,duration:1.3,ease:'expo.out',stagger:.045},'<.1')
+    .from('[data-hero-sub]',{opacity:0,y:16,duration:1,ease:'expo.out',stagger:.1},'<.5')
+    .add(()=>{lenis&&lenis.start();initScroll();ScrollTrigger.refresh();},'-=.6');
+}
+if(reduce){
+  $('#loader').style.display='none';document.body.classList.remove('is-loading');
+  gsap.set('#heroMedia',{clipPath:'inset(0 0 0 0)'});gsap.set('#heroMedia img',{scale:1});
+  initScroll();
+}else{
+  const hero=[(innerWidth/innerHeight>=.8?'p04_0':'p01_0'),'p02_0','p03_0'].map(id=>new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=`img/${id}.webp`;}));
+  const ready=Promise.race([Promise.all([...hero,document.fonts?document.fonts.ready:0]),new Promise(r=>setTimeout(r,5000))]);
+  const o={v:0};
+  gsap.to('#loaderBar',{scaleX:1,duration:1.8,ease:'power2.inOut'});
+  gsap.to(o,{v:15,duration:1.8,ease:'power2.inOut',onUpdate:()=>$('#loaderCount').textContent=pad(Math.round(o.v)),
+    onComplete:()=>ready.then(intro)});
+}
+</script>
+</body>
+</html>
