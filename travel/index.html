@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600&family=Onest:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="lib/maplibre-gl.css">
+<script>window.__errs=[];addEventListener('error',function(e){var t=e.target;__errs.push(t&&t.tagName?('не загрузилось: '+(t.currentSrc||t.src||t.href||t.tagName)):((e.message||'ошибка')+(e.filename?' @ '+e.filename.split('/').pop()+':'+e.lineno:'')))},true);addEventListener('unhandledrejection',function(e){__errs.push('promise: '+(e.reason&&e.reason.message||e.reason))});</script>
 <style>
 /* Журнальная сетка и мягкая смена фона по главам; фото работают как в первой версии: закрепляются, раскрываются, накладываются */
 :root{
@@ -25,6 +26,7 @@ html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!
 html{overflow-x:clip;-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:clamp(15.5px,1.05vw,17.5px);line-height:1.62;overflow-x:clip;-webkit-font-smoothing:antialiased}
 img{display:block;max-width:100%}
+picture{display:contents}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.03em;line-height:1.02;text-wrap:balance}
@@ -218,9 +220,9 @@ footer button{text-decoration:underline;text-underline-offset:3px}
 
 <main>
   <section class="hero" id="hero" data-bg="#EEE8DF">
-    <div class="hero-side l"><img src="img/p02_0.webp" alt="Улуру на закате"></div>
-    <div class="hero-side r"><img src="img/p03_0.webp" alt="Побережье на закате"></div>
-    <div class="hero-media" id="heroMedia"><picture><source media="(min-aspect-ratio: 4/5)" srcset="img/p04_0.webp"><img src="img/p01_0.webp" alt="Скалы Двенадцать апостолов"></picture></div>
+    <div class="hero-side l"><picture><source type="image/webp" srcset="img/p02_0.webp"><img src="img/p02_0.jpg" alt="Улуру на закате"></picture></div>
+    <div class="hero-side r"><picture><source type="image/webp" srcset="img/p03_0.webp"><img src="img/p03_0.jpg" alt="Побережье на закате"></picture></div>
+    <div class="hero-media" id="heroMedia"><picture><source media="(min-aspect-ratio: 4/5)" type="image/webp" srcset="img/p04_0.webp"><source media="(min-aspect-ratio: 4/5)" srcset="img/p04_0.jpg"><source type="image/webp" srcset="img/p01_0.webp"><img src="img/p01_0.jpg" alt="Скалы Двенадцать апостолов"></picture></div>
     <div class="wrap in" id="heroIn">
       <div><div class="label" data-intro>Роадбук группы · июль 2026</div>
         <h1><span class="line-mask"><span>Австралия</span></span></h1>
@@ -384,7 +386,9 @@ const $=(s,c=document)=>c.querySelector(s), $$=(s,c=document)=>[...c.querySelect
 const pad=n=>String(n).padStart(2,'0');
 const CHBG={air:'#E3E7EB',fire:'#EFE1D2',water:'#DEE9E6'};
 const CHACC={air:'#4F6684',fire:'#9C4A26',water:'#2E6A66'};
-const ph=(id,alt,cls='',eager)=>`<figure class="ph ${cls}" data-full="${id}"><img ${eager?'src':'data-src'}="img/${id}.webp" width="${SZ[id][0]}" height="${SZ[id][1]}" alt="${alt}" decoding="async"></figure>`;
+// WebP, а если телефон его не понимает — JPEG; грузится и без скриптов (loading=lazy), скрипт лишь подгружает заранее
+const pic=(id,alt,wh=true)=>`<picture><source type="image/webp" srcset="img/${id}.webp"><img src="img/${id}.jpg" ${wh?`width="${SZ[id][0]}" height="${SZ[id][1]}"`:''} alt="${alt}" loading="lazy" decoding="async"></picture>`;
+const ph=(id,alt,cls='')=>`<figure class="ph ${cls}" data-full="${id}">${pic(id,alt)}</figure>`;
 
 function dayHTML(n,ch){
   const d=DAYS[n];
@@ -401,7 +405,7 @@ function dayHTML(n,ch){
       <div class="collage">${d.cards.map((c,i)=>`<div class="pol" data-i="${i}"><div class="pol-in">${ph(c,d.t)}</div></div>`).join('')}</div>
     </div></section>`;
   if(d.film) h+=`<section class="film" data-film data-bg="${CHBG[ch.id]}"><div class="wrap film-head"><div class="label">День ${n} · кадры</div><h3>${d.film.h}</h3></div>
-    <div class="film-track">${d.film.imgs.map(c=>`<figure class="ph" data-full="${c}" style="aspect-ratio:${SZ[c][0]}/${SZ[c][1]}"><img data-src="img/${c}.webp" alt="${d.film.h}" decoding="async"></figure>`).join('')}<p class="film-end">${d.film.end}</p></div></section>`;
+    <div class="film-track">${d.film.imgs.map(c=>`<figure class="ph" data-full="${c}" style="aspect-ratio:${SZ[c][0]}/${SZ[c][1]}">${pic(c,d.film.h,false)}</figure>`).join('')}<p class="film-end">${d.film.end}</p></div></section>`;
   return h;
 }
 
@@ -409,22 +413,22 @@ $('#cities').innerHTML=CITIES.map(c=>`<article class="city" data-r>${ph(c.img,c.
 $('#stack').insertAdjacentHTML('beforeend',THEMES.map((t,i)=>`<article class="st-card">${ph(t.img,t.h)}<div class="st-in"><div class="st-n">${pad(i+1)}</div><div><h3>${t.h}</h3>${t.p.map(x=>`<p>${x}</p>`).join('')}</div></div></article>`).join(''));
 $('#journey').innerHTML=CHAPTERS.map(c=>`
   <section class="chapter" id="ch-${c.id}" data-bg="${CHBG[c.id]}">
-    <div class="frame"><img data-src="img/${c.img}.webp" alt="${c.word}"></div>
+    <div class="frame">${pic(c.img,c.word,false)}</div>
     <div class="wrap in"><div class="label">${c.num}</div><h2><span class="line-mask"><span>${c.word[0]+c.word.slice(1).toLowerCase()}</span></span></h2></div>
   </section>
   <section data-bg="${CHBG[c.id]}" style="--accent:${CHACC[c.id]}"><div class="wrap ch-text"><div><p class="lead" data-r>${c.lead}</p>${c.close?`<p class="close" data-r>${c.close}</p>`:''}</div>
     <ol>${c.list.map(l=>`<li data-r><span>${l}</span></li>`).join('')}</ol></div></section>
   ${c.days.map(n=>dayHTML(n,c)).join('')}`).join('')+`
-  <section class="finale" data-day="15" data-bg="#EEE8DF"><div class="bgimg"><img data-src="img/p25_0.webp" alt="Побережье на рассвете"></div>
+  <section class="finale" data-day="15" data-bg="#EEE8DF"><div class="bgimg">${pic('p25_0','Побережье на рассвете',false)}</div>
     <div class="wrap in"><div class="label">День 15 из 15</div><h2><span class="line-mask"><span>Вылет</span></span></h2><p>Дорога домой</p></div></section>`;
 $('#inclGrid').innerHTML=INCL.map(g=>`<div class="grp" data-r><h3>${g.h}</h3><ul>${g.l.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')+`<div class="grp not" data-r><h3>Не включено</h3><ul>${NOT.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
 $$('[data-words]').forEach(el=>{el.innerHTML=el.textContent.trim().split(/\s+/).map(w=>`<span class="wd">${w}</span>`).join(' ')});
 
 /* фото подгружаются заранее, за полтора экрана до появления (в любую сторону) */
-// следим за целыми секциями, а не за отдельными фото: фото в анимации может стоять за краем экрана, и браузер его «не видит»
-const loadIn=z=>$$('img[data-src]',z).forEach(i=>{i.src=i.dataset.src;i.removeAttribute('data-src');});
+// следим за целыми секциями: фото в анимации может стоять за краем экрана, и Safari его «не видит» — грузим блоком заранее
+const loadIn=z=>$$('img[loading="lazy"]',z).forEach(i=>{i.loading='eager';});
 const imgIO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;loadIn(e.target);imgIO.unobserve(e.target);}),{rootMargin:'150% 0px'}):null;
-[...new Set($$('img[data-src]').map(i=>i.closest('section,.st-card,article')||document.body))].forEach(z=>imgIO?imgIO.observe(z):loadIn(z));
+if(imgIO)[...new Set($$('img[loading="lazy"]').map(i=>i.closest('section,.st-card,article')||document.body))].forEach(z=>imgIO.observe(z));
 
 /* итог по дням */
 const FLY={6:1,8:1,11:1,14:1};
@@ -436,7 +440,7 @@ $('#sumCols').innerHTML=SUMCH.map(([id,name,range,col])=>{const ch=CHAPTERS.find
 
 const gallery=[...new Set($$('[data-full]').map(e=>e.dataset.full))];
 let lbI=0;const lb=$('#lb'),lbImg=$('#lbImg');
-function lbShow(i){lbI=(i+gallery.length)%gallery.length;lbImg.src=`img/${gallery[lbI]}.webp`;$('#lbCount').textContent=`${lbI+1} из ${gallery.length}`;gsap.fromTo(lbImg,{opacity:0,scale:.98},{opacity:1,scale:1,duration:.5,ease:'power2.out'});}
+function lbShow(i){lbI=(i+gallery.length)%gallery.length;lbImg.src=`img/${gallery[lbI]}.jpg`;$('#lbCount').textContent=`${lbI+1} из ${gallery.length}`;gsap.fromTo(lbImg,{opacity:0,scale:.98},{opacity:1,scale:1,duration:.5,ease:'power2.out'});}
 function lbOpen(id){lbShow(gallery.indexOf(id));lb.classList.add('open');lenis&&lenis.stop();}
 function lbClose(){lb.classList.remove('open');lenis&&lenis.start();}
 $$('[data-full]').forEach(el=>{if(el.closest('.st-card'))return;el.setAttribute('role','button');el.setAttribute('tabindex','0');el.addEventListener('click',()=>lbOpen(el.dataset.full));el.addEventListener('keydown',e=>{if(e.key==='Enter')lbOpen(el.dataset.full);});});
@@ -510,7 +514,7 @@ function init(){
   gsap.fromTo('.finale .bgimg img',{scale:1.2},{scale:1,ease:'none',scrollTrigger:{trigger:'.finale',start:'top bottom',end:'bottom bottom',scrub:true}});
   gsap.from('.finale .line-mask>span',{yPercent:105,duration:1.4,ease:EASE,scrollTrigger:{trigger:'.finale',start:'top 30%',once:true}});
 
-  initMap();
+  try{initMap();}catch(e){__errs.push('карта: '+e.message);}
 
   gsap.set('main [data-r]',{opacity:0,y:20});
   ScrollTrigger.batch('main [data-r]',{start:'top 92%',once:true,onEnter:els=>{const vis=els.filter(e=>e.getBoundingClientRect().top<innerHeight);gsap.set(els.filter(e=>!vis.includes(e)),{opacity:1,y:0});
@@ -522,7 +526,7 @@ function init(){
 
   const order=new Map($$('*').map((e,i)=>[e,i]));const pos=st=>st.trigger&&order.has(st.trigger)?order.get(st.trigger):1e9;
   ScrollTrigger.sort((a,b)=>pos(a)-pos(b)||a.start-b.start);ScrollTrigger.refresh();
-  let t;$$('img[data-src]').forEach(i=>i.addEventListener('load',()=>{clearTimeout(t);t=setTimeout(()=>ScrollTrigger.refresh(),300)},{once:true}));
+  let t;$$('img[loading]').forEach(i=>i.addEventListener('load',()=>{clearTimeout(t);t=setTimeout(()=>ScrollTrigger.refresh(),300)},{once:true}));
 }
 
 /* ============ 3D-карта: глобус → спутник и рельеф, камера летит по маршруту ============ */
@@ -554,9 +558,13 @@ function initMap(){
   $('#dots').innerHTML=STEPS.map(()=>'<i><b></b></i>').join('');
 
   let map=null,ready=false,cur=0,target=0;
+  // если телефон не тянет 3D (нет WebGL2) — показываем обычную карту, подписи по дням продолжают работать
+  const fallback=()=>{const c=$('#mapCanvas');c.style.background='#0E1316 url(data/map-fallback.jpg) center/cover no-repeat';};
   function create(){
     if(map)return;
-    map=new maplibregl.Map({container:'mapCanvas',interactive:false,attributionControl:{compact:true},center:CAM[0].c,zoom:CAM[0].z,pitch:0,maxPitch:75,fadeDuration:0,
+    let gl2=false;try{gl2=!!document.createElement('canvas').getContext('webgl2');}catch(e){}
+    if(!window.maplibregl||!gl2){__errs.push('3D-карта недоступна: '+(!window.maplibregl?'библиотека не загрузилась':'нет WebGL2'));return fallback();}
+    try{map=new maplibregl.Map({container:'mapCanvas',interactive:false,attributionControl:{compact:true},center:CAM[0].c,zoom:CAM[0].z,pitch:0,maxPitch:75,fadeDuration:0,
       style:{version:8,projection:{type:'globe'},
         sources:{
           sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Снимки © Esri, Maxar, Earthstar Geographics'},
@@ -567,6 +575,8 @@ function initMap(){
           {id:'hs',type:'hillshade',source:'hs',paint:{'hillshade-exaggeration':.22,'hillshade-shadow-color':'rgba(0,0,0,.6)','hillshade-highlight-color':'rgba(255,255,255,.25)'}}],
         terrain:{source:'dem',exaggeration:1.5},
         sky:{'sky-color':'#0E1316','horizon-color':'#cfdde2','fog-color':'#cfdde2','sky-horizon-blend':.6,'horizon-fog-blend':.5,'fog-ground-blend':.2,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,5,1,8,0]}}});
+    }catch(e){__errs.push('карта: '+e.message);map=null;return fallback();}
+    map.on('error',e=>__errs.push('карта: '+((e.error&&e.error.message)||'ошибка')));
     map.on('load',()=>{
       SEG.forEach((s,i)=>{map.addSource('s'+i,{type:'geojson',lineMetrics:true,data:{type:'Feature',geometry:{type:'LineString',coordinates:s.c}}});
         map.addLayer({id:'g'+i,type:'line',source:'s'+i,layout:{'line-cap':'round','line-join':'round',visibility:'none'},paint:{'line-width':s.fly?6:9,'line-blur':6,'line-opacity':.38,'line-gradient':['interpolate',['linear'],['line-progress'],0,'#F2C98A',1,'#F2C98A']}});
@@ -608,7 +618,16 @@ function initMap(){
 }
 
 
-init();
+try{init();}catch(e){__errs.push('init: '+e.message);$$('main [data-r]').forEach(x=>{x.style.opacity=1;x.style.transform='none';});}
+
+/* самопроверка: открыть страницу с ?debug — внизу появится отчёт */
+if(/debug/.test(location.search)){setTimeout(()=>{const box=document.createElement('pre');box.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:999;max-height:60vh;overflow:auto;background:#111;color:#9f9;font:12px/1.4 monospace;padding:12px;border-radius:10px;white-space:pre-wrap';
+  const c=document.createElement('canvas');const gl2=!!c.getContext('webgl2');const gl1=!!document.createElement('canvas').getContext('webgl');
+  const webp=new Image();webp.onload=webp.onerror=()=>{const imgs=$$('main img');
+    box.textContent=['Браузер: '+navigator.userAgent,'WebP: '+(webp.width>0?'да':'НЕТ'),'WebGL2: '+(gl2?'да':'НЕТ')+' · WebGL1: '+(gl1?'да':'нет'),'Карта (maplibregl): '+(window.maplibregl?'загружена':'НЕТ'),
+      'Фото: всего '+imgs.length+', загружено '+imgs.filter(i=>i.complete&&i.naturalWidth>0).length+', с ошибкой '+imgs.filter(i=>i.complete&&i.naturalWidth===0).length,
+      'Ошибки ('+__errs.length+'):',...__errs.slice(0,15)].join('\n');document.body.appendChild(box);};
+  webp.src='data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';},3500);}
 </script>
 </body>
 </html>
